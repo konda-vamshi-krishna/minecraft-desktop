@@ -23,13 +23,34 @@ import yaml
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Load C runtime for exact C standard library strtoll / errno behavior
-ucrt = ctypes.CDLL('ucrtbase.dll')
+import sys
+if sys.platform == 'win32':
+    try:
+        ucrt = ctypes.CDLL('ucrtbase.dll')
+        _errno = ucrt._errno
+    except Exception:
+        ucrt = ctypes.cdll.msvcrt
+        _errno = ucrt._errno
+else:
+    import ctypes.util
+    libc_name = ctypes.util.find_library('c') or 'libc.so.6'
+    try:
+        ucrt = ctypes.CDLL(libc_name)
+    except Exception:
+        ucrt = ctypes.CDLL(None)
+    if hasattr(ucrt, '__errno_location'):
+        _errno = ucrt.__errno_location
+    elif hasattr(ucrt, '__error'):
+        _errno = ucrt.__error
+    else:
+        _errno = lambda: ctypes.pointer(ctypes.c_int(0))
+
 ucrt.strtoll.restype = ctypes.c_longlong
 ucrt.strtoll.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
 
-_errno = ucrt._errno
-_errno.restype = ctypes.POINTER(ctypes.c_int)
-_errno.argtypes = []
+if hasattr(_errno, 'restype'):
+    _errno.restype = ctypes.POINTER(ctypes.c_int)
+    _errno.argtypes = []
 
 INT_MIN = -2147483648
 INT_MAX = 2147483647
