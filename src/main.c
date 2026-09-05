@@ -28,6 +28,42 @@
 #include <errno.h>
 #include <limits.h>
 
+#if !defined(HEADLESS_ONLY) && (defined(HAVE_RAYLIB) || (defined(__has_include) && __has_include(<raylib.h>)))
+    #define USE_RAYLIB 1
+    #include <raylib.h>
+#else
+    #define USE_RAYLIB 0
+#endif
+
+static const char* App_GetItemShortName(uint8_t itemId) {
+    switch (itemId) {
+        case ITEM_STONE:          return "Stone";
+        case ITEM_DIRT:           return "Dirt";
+        case ITEM_GRASS_BLOCK:    return "Grass";
+        case ITEM_COBBLESTONE:    return "Cobble";
+        case ITEM_WOOD_LOG:       return "Log";
+        case ITEM_WOOD_PLANKS:    return "Plank";
+        case ITEM_STICK:          return "Stick";
+        case ITEM_CRAFTING_TABLE: return "Craft";
+        case ITEM_FURNACE:        return "Furn";
+        case ITEM_COAL:           return "Coal";
+        case ITEM_TORCH:          return "Torch";
+        case ITEM_WOODEN_PICKAXE: return "W-Pick";
+        case ITEM_STONE_PICKAXE:  return "S-Pick";
+        case ITEM_IRON_PICKAXE:   return "I-Pick";
+        case ITEM_IRON_INGOT:     return "Iron";
+        case ITEM_BEDROCK:        return "Bedrk";
+        case ITEM_SAND:           return "Sand";
+        case ITEM_SANDSTONE:      return "Sandst";
+        case ITEM_SNOW:           return "Snow";
+        case ITEM_LEAVES:         return "Leaves";
+        case ITEM_CACTUS:         return "Cactus";
+        case ITEM_FLOWER:         return "Flowr";
+        case ITEM_TALLGRASS:      return "Grass";
+        default:                  return "";
+    }
+}
+
 // ponytail: [entry: CLI arg parsing with strcmp] -> [getopt_long or dedicated CLI parser if complex flags added]
 // ponytail: [chunk meshing: single-thread budget capped] -> [thread pool worker queue if chunk loading lags at render distance >= 16]
 // ponytail: [world grid: 17x17 toroidal BSS] -> [infinite dynamic chunk hash table if infinite world exploration requested]
@@ -388,7 +424,30 @@ static void App_OnInit(const PlatformConfig* platConfig, const RuntimeConfig* ru
     Interaction_DestructionInit(&s_Game.destructionFSM);
     s_Game.currentHit.hit = false;
 
-    // 9. Input Cursor Capture
+    // 9. Pre-mesh initial chunks around spawn so world is immediately visible on frame 1
+    if (!platConfig->headless) {
+        int pcx = WorldToChunkCoord(FloorToInt(s_Game.player.x));
+        int pcz = WorldToChunkCoord(FloorToInt(s_Game.player.z));
+        for (int r = 0; r <= 3; ++r) {
+            for (int cz = pcz - r; cz <= pcz + r; ++cz) {
+                for (int cx = pcx - r; cx <= pcx + r; ++cx) {
+                    Chunk* chunk = World_GetChunk(cx, cz);
+                    if (chunk && chunk->isLoaded && chunk->isMeshDirty) {
+                        ChunkNeighbors neighbors;
+                        World_GetChunkNeighbors(cx, cz, &neighbors);
+                        ChunkMesh mesh;
+                        Mesher_BuildMesh(chunk, &neighbors, &mesh);
+                        Chunk_UploadGPU(chunk, &mesh);
+                        chunk->vertexCount = mesh.vertexCount;
+                        chunk->indexCount = mesh.indexCount;
+                        chunk->isMeshDirty = false;
+                    }
+                }
+            }
+        }
+    }
+
+    // 10. Input Cursor Capture
     if (!s_Game.isHeadless) {
         Platform_SetCursorCaptured(true);
     }
@@ -582,6 +641,86 @@ static void App_OnRenderFrame(float alpha) {
     if (!s_Game.isHeadless) {
         // 3. Render 3D World Chunks
         World_Render(&s_Game.camera, alpha);
+
+        // Render targeted block wireframe selection outline
+        if (s_Game.currentHit.hit) {
+            World_RenderSelectionBox(s_Game.currentHit.targetX,
+                                     s_Game.currentHit.targetY,
+                                     s_Game.currentHit.targetZ);
+        }
+
+#if USE_RAYLIB
+        // 4. 2D Crosshair at Screen Center
+        int sw = Platform_GetWindowWidth();
+        int sh = Platform_GetWindowHeight();
+        int cx = sw / 2;
+        int cy = sh / 2;
+        DrawRectangle(cx - 8, cy - 1, 16, 2, (Color){ 255, 255, 255, 220 });
+        DrawRectangle(cx - 1, cy - 8, 2, 16, (Color){ 255, 255, 255, 220 });
+
+        // 5. 9-Slot Hotbar at Bottom Center
+        int slotSize = 38;
+        int slotPadding = 4;
+        int totalHotbarWidth = HOTBAR_SLOT_COUNT * slotSize + (HOTBAR_SLOT_COUNT - 1) * slotPadding;
+        int startX = (sw - totalHotbarWidth) / 2;
+        int startY = sh - slotSize - 12;
+
+        for (int s = 0; s < HOTBAR_SLOT_COUNT; ++s) {
+            int sx = startX + s * (slotSize + slotPadding);
+            int sy = startY;
+
+            DrawRectangle(sx, sy, slotSize, slotSize, (Color){ 25, 25, 25, 200 });
+
+            bool isSelected = (s == s_Game.inventory.selectedHotbarIndex);
+            if (isSelected) {
+                DrawRectangleLinesEx((Rectangle){ (float)sx - 2, (float)sy - 2, (float)slotSize + 4, (float)slotSize + 4 }, 2.0f, (Color){ 255, 255, 255, 255 });
+            } else {
+                DrawRectangleLines(sx, sy, slotSize, slotSize, (Color){ 80, 80, 80, 200 });
+            }
+
+            const ItemStack* stack = &s_Game.inventory.slots[s];
+            if (stack->itemId != ITEM_AIR && stack->count > 0) {
+                const char* itemName = App_GetItemShortName(stack->itemId);
+                DrawText(itemName, sx + 3, sy + 4, 10, (Color){ 220, 220, 220, 255 });
+
+                if (stack->count > 1) {
+                    char countStr[8];
+                    snprintf(countStr, sizeof(countStr), "%d", (int)stack->count);
+                    DrawText(countStr, sx + slotSize - 14, sy + slotSize - 12, 10, (Color){ 255, 255, 100, 255 });
+                }
+            }
+        }
+
+        // 6. F3 Telemetry Overlay (Top Left)
+        char hudBuf[128];
+        snprintf(hudBuf, sizeof(hudBuf), "FPS: %d | Pos: %.2f / %.2f / %.2f",
+                 GetFPS(), s_Game.player.x, s_Game.player.y, s_Game.player.z);
+        DrawText(hudBuf, 12, 10, 16, (Color){ 255, 255, 255, 240 });
+
+        int pcx = WorldToChunkCoord(FloorToInt(s_Game.player.x));
+        int pcz = WorldToChunkCoord(FloorToInt(s_Game.player.z));
+        const char* dirStr = "North (-Z)";
+        if (s_Game.camera.forward.x > 0.707f) dirStr = "East (+X)";
+        else if (s_Game.camera.forward.x < -0.707f) dirStr = "West (-X)";
+        else if (s_Game.camera.forward.z > 0.707f) dirStr = "South (+Z)";
+
+        snprintf(hudBuf, sizeof(hudBuf), "Chunk: [%d, %d] | Facing: %s", pcx, pcz, dirStr);
+        DrawText(hudBuf, 12, 30, 14, (Color){ 220, 220, 220, 220 });
+
+        DrawText("Controls: WASD=Move | Space=Jump | L-Click=Break | R-Click=Place | 1-9=Hotbar | ESC=Mouse",
+                 12, 50, 12, (Color){ 190, 190, 190, 200 });
+
+        // 7. Pause Menu Overlay
+        if (s_Game.isPaused) {
+            DrawRectangle(0, 0, sw, sh, (Color){ 0, 0, 0, 140 });
+            const char* pauseTitle = "GAME PAUSED";
+            int tw = MeasureText(pauseTitle, 30);
+            DrawText(pauseTitle, (sw - tw) / 2, sh / 2 - 25, 30, (Color){ 255, 255, 255, 255 });
+            const char* pauseSub = "Click window or press ESC to resume";
+            int sw2 = MeasureText(pauseSub, 16);
+            DrawText(pauseSub, (sw - sw2) / 2, sh / 2 + 18, 16, (Color){ 210, 210, 210, 255 });
+        }
+#endif
     }
 
     Platform_EndFrame();

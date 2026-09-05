@@ -50,9 +50,19 @@
     #include <errno.h>
 #endif
 
+#include "../audio/audio.h"
+
 #if !defined(HEADLESS_ONLY) && (defined(HAVE_RAYLIB) || (defined(__has_include) && __has_include(<raylib.h>)))
     #define USE_RAYLIB 1
     #include <raylib.h>
+    #include <rlgl.h>
+
+    static AudioStream s_PlatformAudioStream;
+    static bool s_PlatformAudioActive = false;
+
+    static void Platform_AudioCallback(void* bufferData, unsigned int frames) {
+        AudioMixerCallback((float*)bufferData, (int)frames);
+    }
 #else
     #define USE_RAYLIB 0
 #endif
@@ -334,6 +344,16 @@ bool Platform_Init(const PlatformConfig* config) {
             SetTargetFPS(60);
         }
         Platform_SetCursorCaptured(true);
+
+        // Initialize audio subsystem & stream
+        InitAudioDevice();
+        if (IsAudioDeviceReady()) {
+            SetAudioStreamBufferSizeDefault(1024);
+            s_PlatformAudioStream = LoadAudioStream(SAMPLE_RATE, 32, 1);
+            SetAudioStreamCallback(s_PlatformAudioStream, Platform_AudioCallback);
+            PlayAudioStream(s_PlatformAudioStream);
+            s_PlatformAudioActive = true;
+        }
 #endif
     }
 
@@ -347,6 +367,12 @@ void Platform_Shutdown(void) {
 
     if (!s_Platform.config.headless) {
 #if USE_RAYLIB
+        if (s_PlatformAudioActive) {
+            StopAudioStream(s_PlatformAudioStream);
+            UnloadAudioStream(s_PlatformAudioStream);
+            CloseAudioDevice();
+            s_PlatformAudioActive = false;
+        }
         CloseWindow();
 #endif
     }

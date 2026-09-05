@@ -14,6 +14,7 @@ obj/
 saves/
 installed_game/
 release_windows/
+game/
 *.log
 
 # Python Cache

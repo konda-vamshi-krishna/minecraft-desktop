@@ -354,6 +354,7 @@ int MesherQueue_Process(MesherQueue* mq, int playerChunkX, int playerChunkZ) {
         targetChunk->vertexCount = mesh.vertexCount;
         targetChunk->indexCount = mesh.indexCount;
         targetChunk->isMeshDirty = false;
+        Chunk_UploadGPU(targetChunk, &mesh);
         processed++;
     }
 

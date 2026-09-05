@@ -143,6 +143,7 @@ void World_Update(float playerX, float playerZ, double dt);
 uint8_t World_GetBlock(int worldX, int worldY, int worldZ);
 bool World_SetBlock(int worldX, int worldY, int worldZ, uint8_t blockId);
 void World_Render(const Camera* camera, float renderAlpha);
+void World_RenderSelectionBox(int x, int y, int z);
 
 // Chunk Access & Toroidal Ring Management
 Chunk* World_GetChunk(int chunkX, int chunkZ);
@@ -150,8 +151,10 @@ void World_GetChunkNeighbors(int chunkX, int chunkZ, ChunkNeighbors* outNeighbor
 uint8_t World_SampleNeighborVoxel(const Chunk* chunk, const ChunkNeighbors* neighbors, int localX, int y, int localZ);
 
 // Internal Chunk Operations (chunk.c)
+struct ChunkMesh;
 void Chunk_Init(Chunk* chunk, int cx, int cz);
 void Chunk_Reset(Chunk* chunk);
+void Chunk_UploadGPU(Chunk* chunk, const struct ChunkMesh* mesh);
 void Chunk_UnloadGPU(Chunk* chunk);
 
 static inline uint8_t Chunk_GetVoxel(const Chunk* chunk, int lx, int ly, int lz) {

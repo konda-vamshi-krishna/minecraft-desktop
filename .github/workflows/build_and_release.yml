@@ -60,21 +60,26 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
+          # Fetch official Raylib 5.0 MinGW-w64 static distribution
+          curl -LO https://github.com/raysan5/raylib/releases/download/5.0/raylib-5.0_win64_mingw-w64.zip
+          7z x raylib-5.0_win64_mingw-w64.zip -oraylib_dist
+
           mkdir -p build
           RC_ARG=""
           if command -v windres &>/dev/null; then
             windres res/resource.rc -O coff -o build/resource.res && RC_ARG="build/resource.res" || true
           fi
           
-          # Compile standalone engine with static C runtime and standard Win32 libraries
-          gcc -O3 -flto -std=c99 -Wall \
-              -DHEADLESS_ONLY -DPLATFORM_DESKTOP \
-              -Isrc \
+          # Compile standalone visual engine with Raylib and static C runtime
+          gcc -O3 -std=c99 -Wall \
+              -DPLATFORM_DESKTOP -DHAVE_RAYLIB \
+              -Isrc -Iraylib_dist/raylib-5.0_win64_mingw-w64/include \
               src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
               $RC_ARG \
-              -o build/minecraft.exe \
+              -Lraylib_dist/raylib-5.0_win64_mingw-w64/lib -lraylib \
               -lopengl32 -lgdi32 -lwinmm -luser32 -lshell32 \
-              -static-libgcc -static -s
+              -static-libgcc -static -s \
+              -o build/minecraft.exe
 
           # Audit dynamic links - Verify zero forbidden DLLs (vcruntime140, msvcp140 banned)
           (dumpbin /dependents build/minecraft.exe 2>/dev/null || objdump -p build/minecraft.exe | grep "DLL Name" 2>/dev/null) || true
@@ -89,46 +94,38 @@ jobs:
           sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev \
                                   libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev \
                                   libxinerama-dev libwayland-dev libxkbcommon-dev
-          mkdir -p build
-          gcc -O3 -flto -std=c99 -Wall \
-              -DHEADLESS_ONLY -DPLATFORM_DESKTOP \
-              -Isrc \
-              src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
-              -o build/minecraft \
-              -lGL -lm -lpthread -ldl -lrt -lX11 \
-              -s
+          curl -LO https://github.com/raysan5/raylib/releases/download/5.0/raylib-5.0_linux_amd64.tar.gz
+          tar -xzf raylib-5.0_linux_amd64.tar.gz
 
-          # Verify dynamic loader dependencies (glibc 2.31 baseline)
+          mkdir -p build
+          gcc -O3 -std=c99 -Wall \
+              -DPLATFORM_DESKTOP -DHAVE_RAYLIB \
+              -Isrc -Iraylib-5.0_linux_amd64/include \
+              src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
+              -Lraylib-5.0_linux_amd64/lib -lraylib \
+              -lGL -lm -lpthread -ldl -lrt -lX11 \
+              -s -o build/minecraft
+
+          # Verify dynamic loader dependencies (glibc baseline)
           ldd build/minecraft
 
       # -------------------------------------------------------------
-      # MACOS UNIVERSAL BUILD
+      # MACOS BUILD
       # -------------------------------------------------------------
-      - name: Build macOS Universal Binary
+      - name: Build macOS Binary
         if: runner.os == 'macOS'
         run: |
+          brew install raylib
           mkdir -p build
-          # Compile x86_64 slice
-          clang -O3 -flto -std=c99 -target x86_64-apple-macos11.0 \
-                -DHEADLESS_ONLY -DPLATFORM_DESKTOP -Isrc \
+          clang -O3 -std=c99 \
+                -DPLATFORM_DESKTOP -DHAVE_RAYLIB -Isrc $(pkg-config --cflags raylib) \
                 src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
-                -o build/minecraft_x86_64 \
-                -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+                $(pkg-config --libs raylib) \
+                -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo \
+                -o build/minecraft
+          strip build/minecraft
 
-          # Compile arm64 slice (Apple Silicon)
-          clang -O3 -flto -std=c99 -target arm64-apple-macos11.0 \
-                -DHEADLESS_ONLY -DPLATFORM_DESKTOP -Isrc \
-                src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
-                -o build/minecraft_arm64 \
-                -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
-
-          # Merge into single Universal 2 Fat Binary
-          lipo -create -output build/minecraft build/minecraft_x86_64 build/minecraft_arm64
-          rm build/minecraft_x86_64 build/minecraft_arm64
-          strip -x build/minecraft
-
-          # Audit binary architectures and linkage
-          lipo -info build/minecraft
+          # Audit binary linkage
           otool -L build/minecraft
 
       # -------------------------------------------------------------
@@ -158,11 +155,19 @@ jobs:
           MINECRAFT DESKTOP - UNIVERSAL 1-CLICK EDITION
           ==================================================
           1. Extract this entire folder anywhere you want.
-          2. Double-click the executable to launch.
+          2. Double-click minecraft.exe or launch_game.bat.
           3. Save files and settings will be stored in ./saves/
           4. Zero installation or internet required. Enjoy!
           ==================================================
           EOF
+
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            cat << 'EOF' > dist/minecraft-desktop/launch_game.bat
+          @echo off
+          cd /d "%~dp0"
+          start "" "minecraft.exe"
+          EOF
+          fi
 
           cd dist
           if [ "${{ runner.os }}" == "Windows" ]; then
