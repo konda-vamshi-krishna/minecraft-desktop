@@ -466,8 +466,22 @@ static void App_OnPollEvents(void) {
             bool cap = Platform_IsCursorCaptured();
             Platform_SetCursorCaptured(!cap);
             s_Game.isPaused = cap;
+            Runtime_SetPaused(s_Game.isPaused);
+            return;
         } else {
             Platform_RequestClose();
+        }
+    }
+
+    // Resume gameplay and recapture cursor on window click if paused
+    // ponytail: Simple click-to-resume -> UI button raymarching if pause menu grows interactive
+    if (s_Game.isPaused && !s_Game.isHeadless) {
+        if (Platform_IsMouseButtonPressed(PLATFORM_MOUSE_BUTTON_LEFT) ||
+            Platform_IsMouseButtonPressed(PLATFORM_MOUSE_BUTTON_RIGHT)) {
+            Platform_SetCursorCaptured(true);
+            s_Game.isPaused = false;
+            Runtime_SetPaused(false);
+            return;
         }
     }
 
@@ -530,11 +544,17 @@ static void App_OnPhysicsTick(double dt) {
 
     // 2. Step Player Kinematics via Swept AABB
     bool wasGrounded = s_Game.player.isGrounded;
+    bool jumpAttempted = s_Game.player.jumpRequested;
     Physics_Step(&s_Game.player, (float)dt);
 
     // Audio: Jump trigger
-    if (s_Game.player.jumpRequested && wasGrounded && !s_Game.player.isGrounded) {
+    if (jumpAttempted && wasGrounded && !s_Game.player.isGrounded) {
         Audio_PlaySound(SOUND_JUMP, 0.6f);
+    }
+
+    // Audio: Landing thump
+    if (!s_Game.wasGroundedPrevTick && s_Game.player.isGrounded) {
+        Audio_PlaySound(SOUND_STEP, 0.5f);
     }
 
     // Audio: Footstep synthesis on ground movement
@@ -614,7 +634,7 @@ static void App_OnPhysicsTick(double dt) {
 }
 
 static void App_OnMeshBudget(int maxChunks) {
-    if (!s_Game.worldInitialized) return;
+    if (!s_Game.worldInitialized || s_Game.isHeadless) return;
 
     int pcx = WorldToChunkCoord(FloorToInt(s_Game.player.x));
     int pcz = WorldToChunkCoord(FloorToInt(s_Game.player.z));
@@ -637,6 +657,15 @@ static void App_OnRenderFrame(float alpha) {
     // 1. Sub-Frame Render Interpolation
     Vec3 renderEye = Physics_GetInterpolatedEyePosition(&s_Game.player, alpha);
     s_Game.camera.position = renderEye;
+
+    if (!s_Game.isHeadless) {
+        int sw = Platform_GetWindowWidth();
+        int sh = Platform_GetWindowHeight();
+        if (sh > 0) {
+            s_Game.camera.aspectRatio = (float)sw / (float)sh;
+        }
+    }
+
     Camera_UpdateMatrices(&s_Game.camera);
 
     // 2. Frame Presentation

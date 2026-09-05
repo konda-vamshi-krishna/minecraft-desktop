@@ -3,6 +3,7 @@
 #include "mesher.h"
 #include "../assets/assets.h"
 #include "../assets/atlas_data.h"
+#include "../platform/platform.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,9 +40,23 @@ static GpuVertex s_GpuScratchVertices[MESHER_MAX_VERTICES];
 static uint16_t  s_GpuScratchIndices[MESHER_MAX_INDICES];
 static Texture2D s_AtlasTexture = { 0 };
 static bool s_AtlasLoaded = false;
+static Camera3D s_LastCamera3D = { 0 };
+static bool s_HasCamera3D = false;
+
+static inline BlockFace FaceNormalToBlockFace(FaceNormal fn) {
+    switch (fn) {
+        case FACE_NEG_X: return FACE_WEST;
+        case FACE_POS_X: return FACE_EAST;
+        case FACE_NEG_Y: return FACE_BOTTOM;
+        case FACE_POS_Y: return FACE_TOP;
+        case FACE_NEG_Z: return FACE_NORTH;
+        case FACE_POS_Z: return FACE_SOUTH;
+        default:         return FACE_TOP;
+    }
+}
 
 static void EnsureAtlasTextureLoaded(void) {
-    if (s_AtlasLoaded) return;
+    if (s_AtlasLoaded || Platform_IsHeadless()) return;
     Image img = {
         .data = (void*)g_AtlasRGBA,
         .width = ATLAS_WIDTH,
@@ -109,7 +124,7 @@ void Chunk_Reset(Chunk* chunk) {
 
 void Chunk_UploadGPU(Chunk* chunk, const ChunkMesh* mesh) {
 #if USE_RAYLIB
-    if (!chunk || !mesh) return;
+    if (!chunk || !mesh || Platform_IsHeadless()) return;
 
     Chunk_UnloadGPU(chunk);
 
@@ -126,7 +141,7 @@ void Chunk_UploadGPU(Chunk* chunk, const ChunkMesh* mesh) {
         s_GpuScratchVertices[i].y = (float)vy;
         s_GpuScratchVertices[i].z = (float)(chunk->chunkZ * CHUNK_DEPTH + (int)vz);
 
-        TileCoord tile = Assets_GetWorldBlockTextureTile((uint8_t)blockId, (BlockFace)normal);
+        TileCoord tile = Assets_GetWorldBlockTextureTile((uint8_t)blockId, FaceNormalToBlockFace((FaceNormal)normal));
         float u0 = (float)tile.tx * 0.0625f;
         float v0 = (float)tile.ty * 0.0625f;
         float u1 = u0 + 0.0625f;
@@ -180,6 +195,14 @@ void Chunk_UploadGPU(Chunk* chunk, const ChunkMesh* mesh) {
 void Chunk_UnloadGPU(Chunk* chunk) {
     if (!chunk) return;
 #if USE_RAYLIB
+    if (Platform_IsHeadless()) {
+        chunk->vaoId = 0;
+        chunk->vboId = 0;
+        chunk->iboId = 0;
+        chunk->vertexCount = 0;
+        chunk->indexCount = 0;
+        return;
+    }
     if (chunk->vaoId != 0) {
         rlUnloadVertexArray(chunk->vaoId);
         chunk->vaoId = 0;
@@ -237,10 +260,11 @@ void World_Shutdown(void) {
         }
     }
 #if USE_RAYLIB
-    if (s_AtlasLoaded) {
+    if (s_AtlasLoaded && !Platform_IsHeadless()) {
         UnloadTexture(s_AtlasTexture);
         s_AtlasLoaded = false;
     }
+    s_HasCamera3D = false;
 #endif
     s_WorldGrid.isInitialized = false;
 }
@@ -382,7 +406,7 @@ void World_Update(float playerX, float playerZ, double dt) {
 void World_Render(const Camera* camera, float renderAlpha) {
     (void)renderAlpha;
 #if USE_RAYLIB
-    if (!camera) return;
+    if (!camera || Platform_IsHeadless()) return;
     EnsureAtlasTextureLoaded();
 
     // 1. Clear background to Minecraft sky blue
@@ -398,12 +422,37 @@ void World_Render(const Camera* camera, float renderAlpha) {
     rayCam.fovy = camera->currentFov;
     rayCam.projection = CAMERA_PERSPECTIVE;
 
+    s_LastCamera3D = rayCam;
+    s_HasCamera3D = true;
+
     BeginMode3D(rayCam);
+    rlEnableDepthTest();
+    rlDisableBackfaceCulling();
+
+    // Flush any pending 2D batch before raw OpenGL/rlgl calls
+    rlDrawRenderBatchActive();
+
+    int defaultShader = rlGetShaderIdDefault();
+    rlEnableShader(defaultShader);
+
+    // Compute Model-View-Projection matrix from current Raylib 3D camera
+    Matrix matModelView = rlGetMatrixModelview();
+    Matrix matProjection = rlGetMatrixProjection();
+    Matrix matMVP = MatrixMultiply(matModelView, matProjection);
+
+    int* defaultLocs = rlGetShaderLocsDefault();
+    if (defaultLocs && defaultLocs[RL_SHADER_LOC_MATRIX_MVP] != -1) {
+        rlSetUniformMatrix(defaultLocs[RL_SHADER_LOC_MATRIX_MVP], matMVP);
+    }
+    if (defaultLocs && defaultLocs[RL_SHADER_LOC_COLOR_DIFFUSE] != -1) {
+        float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        rlSetUniform(defaultLocs[RL_SHADER_LOC_COLOR_DIFFUSE], white, RL_SHADER_UNIFORM_VEC4, 1);
+    }
+
+    rlActiveTextureSlot(0);
+    rlEnableTexture(s_AtlasTexture.id);
 
     // 3. Draw active chunks with frustum culling
-    rlEnableShader(rlGetShaderIdDefault());
-    rlSetTexture(s_AtlasTexture.id);
-
     for (int i = 0; i < WORLD_ACTIVE_CHUNKS; ++i) {
         Chunk* chunk = &s_WorldGrid.chunks[i];
         if (!chunk->isLoaded || chunk->vaoId == 0 || chunk->indexCount == 0) continue;
@@ -425,7 +474,8 @@ void World_Render(const Camera* camera, float renderAlpha) {
     }
 
     rlDisableVertexArray();
-    rlSetTexture(0);
+    rlDisableTexture();
+    rlDisableShader();
 
     EndMode3D();
 #else
@@ -435,8 +485,11 @@ void World_Render(const Camera* camera, float renderAlpha) {
 
 void World_RenderSelectionBox(int x, int y, int z) {
 #if USE_RAYLIB
+    if (!s_HasCamera3D || Platform_IsHeadless()) return;
+    BeginMode3D(s_LastCamera3D);
     Vector3 center = { (float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f };
     DrawCubeWires(center, 1.002f, 1.002f, 1.002f, (Color){ 0, 0, 0, 180 });
+    EndMode3D();
 #else
     (void)x; (void)y; (void)z;
 #endif
