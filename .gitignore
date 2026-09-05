@@ -1,0 +1,29 @@
+# Build Artifacts
+build/
+dist/
+bin/
+obj/
+*.exe
+*.o
+*.obj
+*.res
+*.zip
+*.tar.gz
+
+# Saves & Local Data
+saves/
+*.log
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE & OS Metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation Graphs & Temp
+graphify-out/

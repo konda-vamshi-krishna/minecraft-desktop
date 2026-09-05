@@ -1,0 +1,291 @@
+{
+  "report_type": "Minecraft Desktop E2E Test Suite Execution Report",
+  "timestamp": "2026-09-03T07:49:32.449201+00:00",
+  "summary": {
+    "total_tests": 38,
+    "passed": 38,
+    "failed": 0,
+    "pass_rate_percent": 100.0,
+    "duration_seconds": 0.0175,
+    "status": "PASS"
+  },
+  "tiers": {
+    "tier1": {
+      "name": "Tier 1: Functional Features",
+      "description": "Core physics kinematics, DDA raycast, 41-slot inventory, crafting, audio formulas, base-path resolver",
+      "total_tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "duration_seconds": 0.0175,
+      "status": "PASS",
+      "tests": [
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_01_ui_click_duration_and_waveform",
+          "name": "test_01_ui_click_duration_and_waveform",
+          "status": "PASS",
+          "duration": 0.0003010000000358559,
+          "description": "Verify UI Click: 15ms duration (661 samples at 44.1kHz), square wave bounds [-1.0, 1.0], linear decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_02_footstep_noise_and_exponential_thump",
+          "name": "test_02_footstep_noise_and_exponential_thump",
+          "status": "PASS",
+          "duration": 0.0014162000006763265,
+          "description": "Verify Footstep: 40ms duration (1764 samples), combined noise and 80Hz thump with rapid exponential decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_03_jump_frequency_sweep_and_adsr_envelope",
+          "name": "test_03_jump_frequency_sweep_and_adsr_envelope",
+          "status": "PASS",
+          "duration": 0.0011216000002605142,
+          "description": "Verify Jump: 90ms duration (3969 samples), 25% duty square wave, linear attack (5ms) and decay (85ms)."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_04_block_break_crunch_shatter_envelope",
+          "name": "test_04_block_break_crunch_shatter_envelope",
+          "status": "PASS",
+          "duration": 0.007021899999926973,
+          "description": "Verify Block Break: 160ms duration (7056 samples), LFSR noise + subharmonic decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_05_block_place_pitch_plummet_thud",
+          "name": "test_05_block_place_pitch_plummet_thud",
+          "status": "PASS",
+          "duration": 0.0012974000001122477,
+          "description": "Verify Block Place: 50ms duration (2205 samples), triangle wave with pitch plummet 220*2^(-25t)."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_01_strip_executable_name_to_directory",
+          "name": "test_01_strip_executable_name_to_directory",
+          "status": "PASS",
+          "duration": 2.3400000827678014e-05,
+          "description": "Verify stripping executable binary name yields clean parent directory."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_02_saves_directory_strict_adjacency",
+          "name": "test_02_saves_directory_strict_adjacency",
+          "status": "PASS",
+          "duration": 2.769999991869554e-05,
+          "description": "Verify save files are stored strictly adjacent to binary in ./saves/."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_03_paths_with_spaces_and_special_characters",
+          "name": "test_03_paths_with_spaces_and_special_characters",
+          "status": "PASS",
+          "duration": 2.1799999558425043e-05,
+          "description": "Verify paths containing spaces, accents, or symbols resolve without corruption."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_04_read_only_media_fallback",
+          "name": "test_04_read_only_media_fallback",
+          "status": "PASS",
+          "duration": 0.0008694999996805564,
+          "description": "Verify read-only base path activates graceful fallback to temporary directory."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_05_cwd_independence_invariant",
+          "name": "test_05_cwd_independence_invariant",
+          "status": "PASS",
+          "duration": 0.00012510000033216784,
+          "description": "Verify game resolves base path from executable location, NOT from current working directory."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_01_shapeless_log_to_planks",
+          "name": "test_01_shapeless_log_to_planks",
+          "status": "PASS",
+          "duration": 6.860000030428637e-05,
+          "description": "Verify 1 Wood Log in any slot of 2x2 grid crafts 4 Wood Planks."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_02_shaped_sticks_translation_invariance",
+          "name": "test_02_shaped_sticks_translation_invariance",
+          "status": "PASS",
+          "duration": 5.779999992228113e-05,
+          "description": "Verify 2 vertical planks craft 4 sticks regardless of column offset in 2x2 or 3x3."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_03_crafting_table_2x2_and_furnace_3x3",
+          "name": "test_03_crafting_table_2x2_and_furnace_3x3",
+          "status": "PASS",
+          "duration": 4.86999997519888e-05,
+          "description": "Verify 4 planks -> 1 Crafting Table (2x2) and 8 cobblestone ring -> 1 Furnace (3x3)."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_04_tools_recipes_pickaxes_durability",
+          "name": "test_04_tools_recipes_pickaxes_durability",
+          "status": "PASS",
+          "duration": 0.0013668000001416658,
+          "description": "Verify wooden, stone, and iron pickaxe recipes with canonical durability (59, 131, 250)."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_05_craft_action_ingredient_consumption",
+          "name": "test_05_craft_action_ingredient_consumption",
+          "status": "PASS",
+          "duration": 0.00014079999982641311,
+          "description": "Verify executing craft() decrements each ingredient by exactly 1 and clears exhausted slots."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_06_invalid_recipes_return_none",
+          "name": "test_06_invalid_recipes_return_none",
+          "status": "PASS",
+          "duration": 4.2300000131945126e-05,
+          "description": "Verify non-matching or distorted patterns reject crafting."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_01_exact_single_physics_tick",
+          "name": "test_01_exact_single_physics_tick",
+          "status": "PASS",
+          "duration": 3.370000013092067e-05,
+          "description": "Verify elapsed time equal to fixed dt (1/60s) triggers exactly 1 physics tick and alpha=0.0."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_02_sub_frame_accumulator_and_render_alpha",
+          "name": "test_02_sub_frame_accumulator_and_render_alpha",
+          "status": "PASS",
+          "duration": 2.0399999812070746e-05,
+          "description": "Verify frame time shorter than dt (e.g. 120 FPS, dt/2) produces 0 ticks and alpha=0.5."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_03_spiral_of_death_clamp",
+          "name": "test_03_spiral_of_death_clamp",
+          "status": "PASS",
+          "duration": 2.2300000637187622e-05,
+          "description": "Verify massive lag spike or pause (e.g. 2.0s) clamps to MAX_FRAME_TIME (0.25s)."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_04_render_interpolation_alpha_bounds",
+          "name": "test_04_render_interpolation_alpha_bounds",
+          "status": "PASS",
+          "duration": 4.8999999307852704e-05,
+          "description": "Verify alpha remains strictly within interval [0.0, 1.0) under arbitrary frame timings."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_05_smooth_position_lerp",
+          "name": "test_05_smooth_position_lerp",
+          "status": "PASS",
+          "duration": 1.2999999853491317e-05,
+          "description": "Verify render position interpolates smoothly between previous and current physics ticks."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_01_contiguous_41_slot_layout",
+          "name": "test_01_contiguous_41_slot_layout",
+          "status": "PASS",
+          "duration": 5.160000000614673e-05,
+          "description": "Verify 41-slot layout: 9 hotbar + 27 main + 4 armor + 1 offhand."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_02_hotbar_selection_and_scroll_wrap",
+          "name": "test_02_hotbar_selection_and_scroll_wrap",
+          "status": "PASS",
+          "duration": 2.7300000510876998e-05,
+          "description": "Verify 9-slot selection maps keys 1-9 and mouse scroll with modulo wrap."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_03_stack_size_hierarchy",
+          "name": "test_03_stack_size_hierarchy",
+          "status": "PASS",
+          "duration": 4.4800000068789814e-05,
+          "description": "Verify canonical stack limits: 64 (blocks), 16 (compact), 1 (tools)."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_04_mouse_click_pickup_place_swap",
+          "name": "test_04_mouse_click_pickup_place_swap",
+          "status": "PASS",
+          "duration": 3.620000006776536e-05,
+          "description": "Verify left click pickups, places into empty slot, and swaps mismatched items."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_05_mouse_right_click_single_place_and_split",
+          "name": "test_05_mouse_right_click_single_place_and_split",
+          "status": "PASS",
+          "duration": 4.830000034417026e-05,
+          "description": "Verify right click places 1 item from cursor or picks up half from slot."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_06_shift_click_quick_move",
+          "name": "test_06_shift_click_quick_move",
+          "status": "PASS",
+          "duration": 3.3399999665562063e-05,
+          "description": "Verify shift-click moves item instantly between hotbar (0-8) and main storage (9-35)."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_01_standing_and_sneaking_aabb_dimensions",
+          "name": "test_01_standing_and_sneaking_aabb_dimensions",
+          "status": "PASS",
+          "duration": 4.739999985758914e-05,
+          "description": "Verify rigid AABB dimensions: Standing 0.6x1.8x0.6m, Sneaking 0.6x1.5x0.6m."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_02_standing_and_sneaking_eye_level_offsets",
+          "name": "test_02_standing_and_sneaking_eye_level_offsets",
+          "status": "PASS",
+          "duration": 1.249999968422344e-05,
+          "description": "Verify camera eye level offsets: Standing 1.62m, Sneaking 1.35m."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_03_gravity_acceleration_and_terminal_velocity",
+          "name": "test_03_gravity_acceleration_and_terminal_velocity",
+          "status": "PASS",
+          "duration": 0.0018318000002182089,
+          "description": "Verify downward acceleration g=-32.0 m/s^2 and terminal velocity ceiling v_term=-78.4 m/s."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_04_jump_impulse_and_apex_clearance",
+          "name": "test_04_jump_impulse_and_apex_clearance",
+          "status": "PASS",
+          "duration": 0.0004414000004544505,
+          "description": "Verify jump impulse v_jump=8.944 m/s clears >= 1.25m obstacle height."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_05_ground_friction_and_air_drag",
+          "name": "test_05_ground_friction_and_air_drag",
+          "status": "PASS",
+          "duration": 3.8499999391206075e-05,
+          "description": "Verify ground deceleration is responsive while airborne momentum preserves ballistic flight."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_06_movement_speed_multipliers",
+          "name": "test_06_movement_speed_multipliers",
+          "status": "PASS",
+          "duration": 1.3600000784208532e-05,
+          "description": "Verify base speeds: Walk 4.317 m/s, Sprint 5.612 m/s, Sneak 1.295 m/s."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_01_cardinal_raycast_face_normal_invariants",
+          "name": "test_01_cardinal_raycast_face_normal_invariants",
+          "status": "PASS",
+          "duration": 8.230000003095483e-05,
+          "description": "Verify entered face normal is strictly the negative step direction across all 6 cardinal directions."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_02_reach_distance_thresholds",
+          "name": "test_02_reach_distance_thresholds",
+          "status": "PASS",
+          "duration": 3.9000000469968654e-05,
+          "description": "Verify reach cutoff: hits within max_reach succeed; blocks beyond max_reach report miss."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_03_diagonal_3d_ray_traversal_order",
+          "name": "test_03_diagonal_3d_ray_traversal_order",
+          "status": "PASS",
+          "duration": 2.860000040527666e-05,
+          "description": "Verify diagonal 3D ray traverses every discrete lattice cell along the trajectory."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_04_collinear_axis_zero_components",
+          "name": "test_04_collinear_axis_zero_components",
+          "status": "PASS",
+          "duration": 1.6999999388644937e-05,
+          "description": "Verify raycast handles zero look components (e.g. dy=0, dz=0) without division-by-zero crashes."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_05_immediate_inside_solid_block",
+          "name": "test_05_immediate_inside_solid_block",
+          "status": "PASS",
+          "duration": 1.249999968422344e-05,
+          "description": "Verify if eye origin is already inside a solid block, DDA detects hit at distance 0."
+        }
+      ]
+    }
+  }
+}

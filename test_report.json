@@ -1,0 +1,793 @@
+{
+  "report_type": "Minecraft Desktop E2E Test Suite Execution Report",
+  "timestamp": "2026-09-03T07:47:31.500770+00:00",
+  "summary": {
+    "total_tests": 105,
+    "passed": 105,
+    "failed": 0,
+    "pass_rate_percent": 100.0,
+    "duration_seconds": 0.0485,
+    "status": "PASS"
+  },
+  "tiers": {
+    "tier1": {
+      "name": "Tier 1: Functional Features",
+      "description": "Core physics kinematics, DDA raycast, 41-slot inventory, crafting, audio formulas, base-path resolver",
+      "total_tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "duration_seconds": 0.0264,
+      "status": "PASS",
+      "tests": [
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_01_ui_click_duration_and_waveform",
+          "name": "test_01_ui_click_duration_and_waveform",
+          "status": "PASS",
+          "duration": 0.0003485000006548944,
+          "description": "Verify UI Click: 15ms duration (661 samples at 44.1kHz), square wave bounds [-1.0, 1.0], linear decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_02_footstep_noise_and_exponential_thump",
+          "name": "test_02_footstep_noise_and_exponential_thump",
+          "status": "PASS",
+          "duration": 0.0015345000001616427,
+          "description": "Verify Footstep: 40ms duration (1764 samples), combined noise and 80Hz thump with rapid exponential decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_03_jump_frequency_sweep_and_adsr_envelope",
+          "name": "test_03_jump_frequency_sweep_and_adsr_envelope",
+          "status": "PASS",
+          "duration": 0.0028410999993866426,
+          "description": "Verify Jump: 90ms duration (3969 samples), 25% duty square wave, linear attack (5ms) and decay (85ms)."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_04_block_break_crunch_shatter_envelope",
+          "name": "test_04_block_break_crunch_shatter_envelope",
+          "status": "PASS",
+          "duration": 0.008437000000412809,
+          "description": "Verify Block Break: 160ms duration (7056 samples), LFSR noise + subharmonic decay."
+        },
+        {
+          "id": "test_audio_synthesis.TestAudioSynthesis.test_05_block_place_pitch_plummet_thud",
+          "name": "test_05_block_place_pitch_plummet_thud",
+          "status": "PASS",
+          "duration": 0.0019161000000167405,
+          "description": "Verify Block Place: 50ms duration (2205 samples), triangle wave with pitch plummet 220*2^(-25t)."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_01_strip_executable_name_to_directory",
+          "name": "test_01_strip_executable_name_to_directory",
+          "status": "PASS",
+          "duration": 3.670000023703324e-05,
+          "description": "Verify stripping executable binary name yields clean parent directory."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_02_saves_directory_strict_adjacency",
+          "name": "test_02_saves_directory_strict_adjacency",
+          "status": "PASS",
+          "duration": 7.249999998748535e-05,
+          "description": "Verify save files are stored strictly adjacent to binary in ./saves/."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_03_paths_with_spaces_and_special_characters",
+          "name": "test_03_paths_with_spaces_and_special_characters",
+          "status": "PASS",
+          "duration": 2.6300000172341242e-05,
+          "description": "Verify paths containing spaces, accents, or symbols resolve without corruption."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_04_read_only_media_fallback",
+          "name": "test_04_read_only_media_fallback",
+          "status": "PASS",
+          "duration": 0.0011035999996238388,
+          "description": "Verify read-only base path activates graceful fallback to temporary directory."
+        },
+        {
+          "id": "test_basepath_resolver.TestBasePathResolver.test_05_cwd_independence_invariant",
+          "name": "test_05_cwd_independence_invariant",
+          "status": "PASS",
+          "duration": 0.00014030000056663994,
+          "description": "Verify game resolves base path from executable location, NOT from current working directory."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_01_shapeless_log_to_planks",
+          "name": "test_01_shapeless_log_to_planks",
+          "status": "PASS",
+          "duration": 7.829999958630651e-05,
+          "description": "Verify 1 Wood Log in any slot of 2x2 grid crafts 4 Wood Planks."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_02_shaped_sticks_translation_invariance",
+          "name": "test_02_shaped_sticks_translation_invariance",
+          "status": "PASS",
+          "duration": 5.869999949936755e-05,
+          "description": "Verify 2 vertical planks craft 4 sticks regardless of column offset in 2x2 or 3x3."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_03_crafting_table_2x2_and_furnace_3x3",
+          "name": "test_03_crafting_table_2x2_and_furnace_3x3",
+          "status": "PASS",
+          "duration": 4.850000004807953e-05,
+          "description": "Verify 4 planks -> 1 Crafting Table (2x2) and 8 cobblestone ring -> 1 Furnace (3x3)."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_04_tools_recipes_pickaxes_durability",
+          "name": "test_04_tools_recipes_pickaxes_durability",
+          "status": "PASS",
+          "duration": 0.0015210999999908381,
+          "description": "Verify wooden, stone, and iron pickaxe recipes with canonical durability (59, 131, 250)."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_05_craft_action_ingredient_consumption",
+          "name": "test_05_craft_action_ingredient_consumption",
+          "status": "PASS",
+          "duration": 5.449999935080996e-05,
+          "description": "Verify executing craft() decrements each ingredient by exactly 1 and clears exhausted slots."
+        },
+        {
+          "id": "test_crafting_engine.TestCraftingEngine.test_06_invalid_recipes_return_none",
+          "name": "test_06_invalid_recipes_return_none",
+          "status": "PASS",
+          "duration": 3.319999996165279e-05,
+          "description": "Verify non-matching or distorted patterns reject crafting."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_01_exact_single_physics_tick",
+          "name": "test_01_exact_single_physics_tick",
+          "status": "PASS",
+          "duration": 2.519999998185085e-05,
+          "description": "Verify elapsed time equal to fixed dt (1/60s) triggers exactly 1 physics tick and alpha=0.0."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_02_sub_frame_accumulator_and_render_alpha",
+          "name": "test_02_sub_frame_accumulator_and_render_alpha",
+          "status": "PASS",
+          "duration": 1.4500000361294951e-05,
+          "description": "Verify frame time shorter than dt (e.g. 120 FPS, dt/2) produces 0 ticks and alpha=0.5."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_03_spiral_of_death_clamp",
+          "name": "test_03_spiral_of_death_clamp",
+          "status": "PASS",
+          "duration": 1.809999957913533e-05,
+          "description": "Verify massive lag spike or pause (e.g. 2.0s) clamps to MAX_FRAME_TIME (0.25s)."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_04_render_interpolation_alpha_bounds",
+          "name": "test_04_render_interpolation_alpha_bounds",
+          "status": "PASS",
+          "duration": 4.11000000895001e-05,
+          "description": "Verify alpha remains strictly within interval [0.0, 1.0) under arbitrary frame timings."
+        },
+        {
+          "id": "test_fixed_loop_timing.TestFixedLoopTiming.test_05_smooth_position_lerp",
+          "name": "test_05_smooth_position_lerp",
+          "status": "PASS",
+          "duration": 1.3199999557400588e-05,
+          "description": "Verify render position interpolates smoothly between previous and current physics ticks."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_01_contiguous_41_slot_layout",
+          "name": "test_01_contiguous_41_slot_layout",
+          "status": "PASS",
+          "duration": 3.820000074483687e-05,
+          "description": "Verify 41-slot layout: 9 hotbar + 27 main + 4 armor + 1 offhand."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_02_hotbar_selection_and_scroll_wrap",
+          "name": "test_02_hotbar_selection_and_scroll_wrap",
+          "status": "PASS",
+          "duration": 2.3999999939405825e-05,
+          "description": "Verify 9-slot selection maps keys 1-9 and mouse scroll with modulo wrap."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_03_stack_size_hierarchy",
+          "name": "test_03_stack_size_hierarchy",
+          "status": "PASS",
+          "duration": 5.9300000430084765e-05,
+          "description": "Verify canonical stack limits: 64 (blocks), 16 (compact), 1 (tools)."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_04_mouse_click_pickup_place_swap",
+          "name": "test_04_mouse_click_pickup_place_swap",
+          "status": "PASS",
+          "duration": 5.980000059935264e-05,
+          "description": "Verify left click pickups, places into empty slot, and swaps mismatched items."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_05_mouse_right_click_single_place_and_split",
+          "name": "test_05_mouse_right_click_single_place_and_split",
+          "status": "PASS",
+          "duration": 4.9199999921256676e-05,
+          "description": "Verify right click places 1 item from cursor or picks up half from slot."
+        },
+        {
+          "id": "test_inventory_system.TestInventorySystem.test_06_shift_click_quick_move",
+          "name": "test_06_shift_click_quick_move",
+          "status": "PASS",
+          "duration": 3.699999979289714e-05,
+          "description": "Verify shift-click moves item instantly between hotbar (0-8) and main storage (9-35)."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_01_standing_and_sneaking_aabb_dimensions",
+          "name": "test_01_standing_and_sneaking_aabb_dimensions",
+          "status": "PASS",
+          "duration": 9.890000001178123e-05,
+          "description": "Verify rigid AABB dimensions: Standing 0.6x1.8x0.6m, Sneaking 0.6x1.5x0.6m."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_02_standing_and_sneaking_eye_level_offsets",
+          "name": "test_02_standing_and_sneaking_eye_level_offsets",
+          "status": "PASS",
+          "duration": 2.080000012938399e-05,
+          "description": "Verify camera eye level offsets: Standing 1.62m, Sneaking 1.35m."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_03_gravity_acceleration_and_terminal_velocity",
+          "name": "test_03_gravity_acceleration_and_terminal_velocity",
+          "status": "PASS",
+          "duration": 0.003230199999961769,
+          "description": "Verify downward acceleration g=-32.0 m/s^2 and terminal velocity ceiling v_term=-78.4 m/s."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_04_jump_impulse_and_apex_clearance",
+          "name": "test_04_jump_impulse_and_apex_clearance",
+          "status": "PASS",
+          "duration": 0.0004925000002913293,
+          "description": "Verify jump impulse v_jump=8.944 m/s clears >= 1.25m obstacle height."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_05_ground_friction_and_air_drag",
+          "name": "test_05_ground_friction_and_air_drag",
+          "status": "PASS",
+          "duration": 4.239999998389976e-05,
+          "description": "Verify ground deceleration is responsive while airborne momentum preserves ballistic flight."
+        },
+        {
+          "id": "test_physics_kinematics.TestPhysicsKinematics.test_06_movement_speed_multipliers",
+          "name": "test_06_movement_speed_multipliers",
+          "status": "PASS",
+          "duration": 1.3799999578623101e-05,
+          "description": "Verify base speeds: Walk 4.317 m/s, Sprint 5.612 m/s, Sneak 1.295 m/s."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_01_cardinal_raycast_face_normal_invariants",
+          "name": "test_01_cardinal_raycast_face_normal_invariants",
+          "status": "PASS",
+          "duration": 9.43000004554051e-05,
+          "description": "Verify entered face normal is strictly the negative step direction across all 6 cardinal directions."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_02_reach_distance_thresholds",
+          "name": "test_02_reach_distance_thresholds",
+          "status": "PASS",
+          "duration": 4.130000070290407e-05,
+          "description": "Verify reach cutoff: hits within max_reach succeed; blocks beyond max_reach report miss."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_03_diagonal_3d_ray_traversal_order",
+          "name": "test_03_diagonal_3d_ray_traversal_order",
+          "status": "PASS",
+          "duration": 3.079999987676274e-05,
+          "description": "Verify diagonal 3D ray traverses every discrete lattice cell along the trajectory."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_04_collinear_axis_zero_components",
+          "name": "test_04_collinear_axis_zero_components",
+          "status": "PASS",
+          "duration": 1.650000012887176e-05,
+          "description": "Verify raycast handles zero look components (e.g. dy=0, dz=0) without division-by-zero crashes."
+        },
+        {
+          "id": "test_raycast_dda.TestRaycastDDA.test_05_immediate_inside_solid_block",
+          "name": "test_05_immediate_inside_solid_block",
+          "status": "PASS",
+          "duration": 1.2100000276404899e-05,
+          "description": "Verify if eye origin is already inside a solid block, DDA detects hit at distance 0."
+        }
+      ]
+    },
+    "tier2": {
+      "name": "Tier 2: Boundary & Corner Cases",
+      "description": "Negative coordinates, terminal velocity anti-tunneling, auto-step ceiling abort, sneak ledge-clamp, bedrock",
+      "total_tests": 36,
+      "passed": 36,
+      "failed": 0,
+      "duration_seconds": 0.0162,
+      "status": "PASS",
+      "tests": [
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_01_placement_at_player_feet_rejected",
+          "name": "test_01_placement_at_player_feet_rejected",
+          "status": "PASS",
+          "duration": 3.0199999855540227e-05,
+          "description": "Verify placing a block directly inside player's lower body is rejected."
+        },
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_02_placement_at_player_head_rejected",
+          "name": "test_02_placement_at_player_head_rejected",
+          "status": "PASS",
+          "duration": 1.2800000149582047e-05,
+          "description": "Verify placing a block at player eye level (y=65) is rejected while standing."
+        },
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_03_placement_above_sneaking_player_accepted",
+          "name": "test_03_placement_above_sneaking_player_accepted",
+          "status": "PASS",
+          "duration": 1.1199999789823778e-05,
+          "description": "Verify placing block at y=66 above a sneaking player (height 1.5m -> top at 65.5m) is accepted."
+        },
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_04_adjacent_placement_without_overlap_accepted",
+          "name": "test_04_adjacent_placement_without_overlap_accepted",
+          "status": "PASS",
+          "duration": 9.299999874201603e-06,
+          "description": "Verify placing block immediately adjacent to player's bounding box is accepted."
+        },
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_05_world_height_boundaries",
+          "name": "test_05_world_height_boundaries",
+          "status": "PASS",
+          "duration": 1.1099999937869143e-05,
+          "description": "Verify placement at y < 0 or y >= 256 is strictly rejected."
+        },
+        {
+          "id": "test_anti_suffocation_placement.TestAntiSuffocationPlacement.test_06_occupied_cell_rejection",
+          "name": "test_06_occupied_cell_rejection",
+          "status": "PASS",
+          "duration": 8.300000445160549e-06,
+          "description": "Verify placing into an already occupied block (not air) is rejected."
+        },
+        {
+          "id": "test_autostep_ceiling_abort.TestAutoStepCeilingAbort.test_01_step_up_success_with_clear_headroom",
+          "name": "test_01_step_up_success_with_clear_headroom",
+          "status": "PASS",
+          "duration": 0.0003287999998065061,
+          "description": "Verify 0.5m slab step-up succeeds when vertical headspace (>= 1.8m) is completely clear."
+        },
+        {
+          "id": "test_autostep_ceiling_abort.TestAutoStepCeilingAbort.test_02_step_up_aborted_due_to_low_ceiling",
+          "name": "test_02_step_up_aborted_due_to_low_ceiling",
+          "status": "PASS",
+          "duration": 0.0005115000003570458,
+          "description": "Verify 0.5m step-up is aborted if ceiling block is directly overhead (headroom < 1.8m)."
+        },
+        {
+          "id": "test_autostep_ceiling_abort.TestAutoStepCeilingAbort.test_03_airborne_player_cannot_autostep",
+          "name": "test_03_airborne_player_cannot_autostep",
+          "status": "PASS",
+          "duration": 2.2599999283556826e-05,
+          "description": "Verify player in mid-air (is_grounded == False) cannot auto-step up walls."
+        },
+        {
+          "id": "test_autostep_ceiling_abort.TestAutoStepCeilingAbort.test_04_wall_too_high_for_autostep",
+          "name": "test_04_wall_too_high_for_autostep",
+          "status": "PASS",
+          "duration": 0.0022763999995731865,
+          "description": "Verify full 1.0m tall wall cannot be auto-stepped with 0.55m step height."
+        },
+        {
+          "id": "test_autostep_ceiling_abort.TestAutoStepCeilingAbort.test_05_multi_step_staircase_climb",
+          "name": "test_05_multi_step_staircase_climb",
+          "status": "PASS",
+          "duration": 0.0014154000000417,
+          "description": "Verify successive auto-steps allow ascending a multi-tier 0.5m staircase smoothly without jumping."
+        },
+        {
+          "id": "test_bedrock_indestructibility.TestBedrockIndestructibility.test_01_bedrock_indestructible_under_extreme_tools",
+          "name": "test_01_bedrock_indestructible_under_extreme_tools",
+          "status": "PASS",
+          "duration": 0.007289099999979953,
+          "description": "Verify bedrock (H = -1.0) never breaks even with maximum tool multiplier over thousands of ticks."
+        },
+        {
+          "id": "test_bedrock_indestructibility.TestBedrockIndestructibility.test_02_instant_break_zero_hardness",
+          "name": "test_02_instant_break_zero_hardness",
+          "status": "PASS",
+          "duration": 2.049999966402538e-05,
+          "description": "Verify blocks with H = 0.0 (tall grass, flowers) shatter on the very first tick."
+        },
+        {
+          "id": "test_bedrock_indestructibility.TestBedrockIndestructibility.test_03_crack_stages_clamp_to_zero_through_nine",
+          "name": "test_03_crack_stages_clamp_to_zero_through_nine",
+          "status": "PASS",
+          "duration": 1.650000012887176e-05,
+          "description": "Verify crack stages progress monotonically through 0..9 and never exceed 9."
+        },
+        {
+          "id": "test_bedrock_indestructibility.TestBedrockIndestructibility.test_04_retargeting_adjacent_block_resets_progress",
+          "name": "test_04_retargeting_adjacent_block_resets_progress",
+          "status": "PASS",
+          "duration": 3.130000004603062e-05,
+          "description": "Verify shifting crosshair from block A to block B resets break progress to 0."
+        },
+        {
+          "id": "test_bedrock_indestructibility.TestBedrockIndestructibility.test_05_player_moving_out_of_reach_resets_progress",
+          "name": "test_05_player_moving_out_of_reach_resets_progress",
+          "status": "PASS",
+          "duration": 2.210000002378365e-05,
+          "description": "Verify player backing away beyond 5.0m maximum reach aborts breaking and resets progress."
+        },
+        {
+          "id": "test_inventory_remainder_retention.TestInventoryRemainderRetention.test_01_partial_stack_overflow_remainder",
+          "name": "test_01_partial_stack_overflow_remainder",
+          "status": "PASS",
+          "duration": 6.2199999774748e-05,
+          "description": "Verify adding 30 items to a slot with 50 items (max 64) returns exactly 16 remainder."
+        },
+        {
+          "id": "test_inventory_remainder_retention.TestInventoryRemainderRetention.test_02_completely_full_inventory_zero_item_loss",
+          "name": "test_02_completely_full_inventory_zero_item_loss",
+          "status": "PASS",
+          "duration": 0.00017740000021149172,
+          "description": "Verify adding items to completely filled inventory returns 100% of items without destruction."
+        },
+        {
+          "id": "test_inventory_remainder_retention.TestInventoryRemainderRetention.test_03_left_drag_even_distribution_with_cursor_remainder",
+          "name": "test_03_left_drag_even_distribution_with_cursor_remainder",
+          "status": "PASS",
+          "duration": 2.500000027794158e-05,
+          "description": "Verify left-drag distributes items equally across targeted slots and keeps remainder in cursor."
+        },
+        {
+          "id": "test_inventory_remainder_retention.TestInventoryRemainderRetention.test_04_right_drag_one_per_slot_distribution",
+          "name": "test_04_right_drag_one_per_slot_distribution",
+          "status": "PASS",
+          "duration": 2.9599999834317714e-05,
+          "description": "Verify right-drag places exactly 1 item per slot and decrements cursor count accordingly."
+        },
+        {
+          "id": "test_inventory_remainder_retention.TestInventoryRemainderRetention.test_05_unstackable_tools_strictly_forbidden_from_merging",
+          "name": "test_05_unstackable_tools_strictly_forbidden_from_merging",
+          "status": "PASS",
+          "duration": 2.6000000616477337e-05,
+          "description": "Verify tools with max_stack=1 never merge into counts > 1."
+        },
+        {
+          "id": "test_negative_coordinates.TestNegativeCoordinates.test_01_boundary_around_zero",
+          "name": "test_01_boundary_around_zero",
+          "status": "PASS",
+          "duration": 1.5499999790336005e-05,
+          "description": "Verify chunk and local coordinates across zero boundary: X=0 vs X=-1."
+        },
+        {
+          "id": "test_negative_coordinates.TestNegativeCoordinates.test_02_negative_chunk_boundary_16_to_17",
+          "name": "test_02_negative_chunk_boundary_16_to_17",
+          "status": "PASS",
+          "duration": 1.0799999472510535e-05,
+          "description": "Verify chunk transition from chunk -1 to chunk -2 at X=-16 and X=-17."
+        },
+        {
+          "id": "test_negative_coordinates.TestNegativeCoordinates.test_03_deep_negative_coordinate_bitshifts",
+          "name": "test_03_deep_negative_coordinate_bitshifts",
+          "status": "PASS",
+          "duration": 1.1099999937869143e-05,
+          "description": "Verify large negative coordinates map accurately to chunk and local coordinates."
+        },
+        {
+          "id": "test_negative_coordinates.TestNegativeCoordinates.test_04_roundtrip_coordinate_reconstruction_invariant",
+          "name": "test_04_roundtrip_coordinate_reconstruction_invariant",
+          "status": "PASS",
+          "duration": 0.0004876000002695946,
+          "description": "Verify roundtrip identity: WorldCoord == ChunkCoord * 16 + LocalCoord across [-5000, 5000]."
+        },
+        {
+          "id": "test_negative_coordinates.TestNegativeCoordinates.test_05_flat_chunk_voxel_index_bounds",
+          "name": "test_05_flat_chunk_voxel_index_bounds",
+          "status": "PASS",
+          "duration": 1.2999999853491317e-05,
+          "description": "Verify 3D YZX index (ly + lx*256 + lz*4096) is strictly in [0, 65535] (64 KiB)."
+        },
+        {
+          "id": "test_sneak_ledge_clamp.TestSneakLedgeClamp.test_01_sneak_prevents_walking_off_edge_x",
+          "name": "test_01_sneak_prevents_walking_off_edge_x",
+          "status": "PASS",
+          "duration": 0.00032610000016575214,
+          "description": "Verify sneaking player on isolated 1x1 block cannot fall off towards +X."
+        },
+        {
+          "id": "test_sneak_ledge_clamp.TestSneakLedgeClamp.test_02_sneak_prevents_walking_off_edge_z",
+          "name": "test_02_sneak_prevents_walking_off_edge_z",
+          "status": "PASS",
+          "duration": 0.0002730000005612965,
+          "description": "Verify sneaking player on isolated 1x1 block cannot fall off towards +Z."
+        },
+        {
+          "id": "test_sneak_ledge_clamp.TestSneakLedgeClamp.test_03_convex_corner_diagonal_clamping",
+          "name": "test_03_convex_corner_diagonal_clamping",
+          "status": "PASS",
+          "duration": 0.0003827999998975429,
+          "description": "Verify diagonal movement into a convex corner clamps both axes safely at edge."
+        },
+        {
+          "id": "test_sneak_ledge_clamp.TestSneakLedgeClamp.test_04_sliding_along_edge_parallel_axis_unblocked",
+          "name": "test_04_sliding_along_edge_parallel_axis_unblocked",
+          "status": "PASS",
+          "duration": 0.00040749999971012585,
+          "description": "Verify clamping along X (cliff edge) does not block movement along Z (supported pathway)."
+        },
+        {
+          "id": "test_sneak_ledge_clamp.TestSneakLedgeClamp.test_05_releasing_sneak_allows_falling",
+          "name": "test_05_releasing_sneak_allows_falling",
+          "status": "PASS",
+          "duration": 0.00022400000034394907,
+          "description": "Verify releasing sneak (is_sneaking=False) allows player to walk off edge and fall."
+        },
+        {
+          "id": "test_terminal_velocity_tunneling.TestTerminalVelocityTunneling.test_01_terminal_velocity_single_block_floor_landing",
+          "name": "test_01_terminal_velocity_single_block_floor_landing",
+          "status": "PASS",
+          "duration": 2.8899999961140566e-05,
+          "description": "Verify falling at terminal velocity (-78.4 m/s) does not tunnel through a 1-block thick floor."
+        },
+        {
+          "id": "test_terminal_velocity_tunneling.TestTerminalVelocityTunneling.test_02_terminal_velocity_thin_slab_landing",
+          "name": "test_02_terminal_velocity_thin_slab_landing",
+          "status": "PASS",
+          "duration": 2.300000051036477e-05,
+          "description": "Verify falling at terminal velocity onto a 1-block tall boundary stops cleanly on upper boundary."
+        },
+        {
+          "id": "test_terminal_velocity_tunneling.TestTerminalVelocityTunneling.test_03_high_speed_impact_preserves_horizontal_coordinates",
+          "name": "test_03_high_speed_impact_preserves_horizontal_coordinates",
+          "status": "PASS",
+          "duration": 2.1400000150606502e-05,
+          "description": "Verify vertical terminal velocity impact does not corrupt horizontal X/Z coordinates."
+        },
+        {
+          "id": "test_terminal_velocity_tunneling.TestTerminalVelocityTunneling.test_04_continuous_fall_through_shaft_to_bottom",
+          "name": "test_04_continuous_fall_through_shaft_to_bottom",
+          "status": "PASS",
+          "duration": 0.0007907999997769366,
+          "description": "Verify falling 100 blocks through a 1x1 empty vertical shaft terminates safely on bottom bedrock."
+        },
+        {
+          "id": "test_terminal_velocity_tunneling.TestTerminalVelocityTunneling.test_05_ceiling_bump_during_rapid_upward_trajectory",
+          "name": "test_05_ceiling_bump_during_rapid_upward_trajectory",
+          "status": "PASS",
+          "duration": 2.299999960087007e-05,
+          "description": "Verify high upward velocity hitting a ceiling stops at ceiling bottom without tunneling through."
+        }
+      ]
+    },
+    "tier3": {
+      "name": "Tier 3: Pairwise Interactions",
+      "description": "Sprint-jumping + exhaustion, DDA mining + drops, crafting table lifecycle, auto-step + sneak cornering",
+      "total_tests": 20,
+      "passed": 20,
+      "failed": 0,
+      "duration_seconds": 0.005,
+      "status": "PASS",
+      "tests": [
+        {
+          "id": "test_autostep_sneak_cornering.TestAutoStepSneakCornering.test_01_sneaking_player_autosteps_onto_slab",
+          "name": "test_01_sneaking_player_autosteps_onto_slab",
+          "status": "PASS",
+          "duration": 0.0009247999996659928,
+          "description": "Verify player in sneak mode automatically steps up +0.5m onto slab at (1, 64, 0)."
+        },
+        {
+          "id": "test_autostep_sneak_cornering.TestAutoStepSneakCornering.test_02_elevation_retention_while_sneaking",
+          "name": "test_02_elevation_retention_while_sneaking",
+          "status": "PASS",
+          "duration": 0.0006124000001364038,
+          "description": "Verify sneaking player maintains elevated y=64.5 while moving across slab (1, 64, 0) to (2, 64, 0)."
+        },
+        {
+          "id": "test_autostep_sneak_cornering.TestAutoStepSneakCornering.test_03_elevated_edge_clamp_prevents_falling_to_lower_floor",
+          "name": "test_03_elevated_edge_clamp_prevents_falling_to_lower_floor",
+          "status": "PASS",
+          "duration": 0.0004000999997515464,
+          "description": "Verify sneak ledge clamp prevents player from stepping off the elevated slab perimeter."
+        },
+        {
+          "id": "test_autostep_sneak_cornering.TestAutoStepSneakCornering.test_04_sliding_along_elevated_l_shape",
+          "name": "test_04_sliding_along_elevated_l_shape",
+          "status": "PASS",
+          "duration": 0.0006493000000773463,
+          "description": "Verify moving diagonally at edge clamps cliff axis while allowing progress down the L-track (+Z)."
+        },
+        {
+          "id": "test_autostep_sneak_cornering.TestAutoStepSneakCornering.test_05_releasing_sneak_on_elevated_platform_drops_player",
+          "name": "test_05_releasing_sneak_on_elevated_platform_drops_player",
+          "status": "PASS",
+          "duration": 0.00031599999965692405,
+          "description": "Verify releasing sneak on elevated platform allows walking off and falling back down."
+        },
+        {
+          "id": "test_crafting_table_lifecycle.TestCraftingTableLifecycle.test_01_open_table_3x3_grid_initial_state",
+          "name": "test_01_open_table_3x3_grid_initial_state",
+          "status": "PASS",
+          "duration": 6.339999981719302e-05,
+          "description": "Verify opening crafting table initializes empty 3x3 matrix."
+        },
+        {
+          "id": "test_crafting_table_lifecycle.TestCraftingTableLifecycle.test_02_recipe_matching_furnace",
+          "name": "test_02_recipe_matching_furnace",
+          "status": "PASS",
+          "duration": 7.189999996626284e-05,
+          "description": "Verify populating 8 cobblestone around outer border detects Furnace in output slot."
+        },
+        {
+          "id": "test_crafting_table_lifecycle.TestCraftingTableLifecycle.test_03_take_output_consumes_ingredients",
+          "name": "test_03_take_output_consumes_ingredients",
+          "status": "PASS",
+          "duration": 0.00014490000012301607,
+          "description": "Verify taking crafted output decrements each ingredient slot by exactly 1."
+        },
+        {
+          "id": "test_crafting_table_lifecycle.TestCraftingTableLifecycle.test_04_closing_table_returns_orphan_items_to_inventory",
+          "name": "test_04_closing_table_returns_orphan_items_to_inventory",
+          "status": "PASS",
+          "duration": 6.940000002941815e-05,
+          "description": "Verify closing crafting table returns all remaining items in 3x3 grid to player inventory."
+        },
+        {
+          "id": "test_crafting_table_lifecycle.TestCraftingTableLifecycle.test_05_overflow_drops_on_ground_when_inventory_full",
+          "name": "test_05_overflow_drops_on_ground_when_inventory_full",
+          "status": "PASS",
+          "duration": 5.929999952059006e-05,
+          "description": "Verify if player inventory is full upon close, remaining items drop on ground without vanishing."
+        },
+        {
+          "id": "test_dda_mining_drop_pickup.TestDDAMiningDropPickup.test_01_dda_target_and_progressive_mining_lifecycle",
+          "name": "test_01_dda_target_and_progressive_mining_lifecycle",
+          "status": "PASS",
+          "duration": 5.409999994299142e-05,
+          "description": "Verify DDA raycast locks onto Wood Log and bare-hand mining breaks it after 120 ticks (2.0s)."
+        },
+        {
+          "id": "test_dda_mining_drop_pickup.TestDDAMiningDropPickup.test_02_block_break_spawns_3d_item_drop",
+          "name": "test_02_block_break_spawns_3d_item_drop",
+          "status": "PASS",
+          "duration": 2.7499999305291567e-05,
+          "description": "Verify block break spawns a 3D ItemDropEntity centered in the broken voxel."
+        },
+        {
+          "id": "test_dda_mining_drop_pickup.TestDDAMiningDropPickup.test_03_item_drop_collection_radius",
+          "name": "test_03_item_drop_collection_radius",
+          "status": "PASS",
+          "duration": 3.0100000003585592e-05,
+          "description": "Verify item drop is collected when player enters 1.5m radius and adds to inventory."
+        },
+        {
+          "id": "test_dda_mining_drop_pickup.TestDDAMiningDropPickup.test_04_tool_mining_speedup_and_durability_decrement",
+          "name": "test_04_tool_mining_speedup_and_durability_decrement",
+          "status": "PASS",
+          "duration": 3.0499999411404133e-05,
+          "description": "Verify wooden pickaxe (tool multiplier M=2.0) mines stone in 0.75s and loses 1 durability."
+        },
+        {
+          "id": "test_dda_mining_drop_pickup.TestDDAMiningDropPickup.test_05_reach_violation_cancels_mining",
+          "name": "test_05_reach_violation_cancels_mining",
+          "status": "PASS",
+          "duration": 2.5499999537714757e-05,
+          "description": "Verify backing outside 5.0m reach envelope during mining cancels progress."
+        },
+        {
+          "id": "test_sprint_jump_exhaustion.TestSprintJumpExhaustion.test_01_sprint_speed_and_exhaustion_accumulation",
+          "name": "test_01_sprint_speed_and_exhaustion_accumulation",
+          "status": "PASS",
+          "duration": 0.000613100000009581,
+          "description": "Verify sprinting applies sprint speed (5.612 m/s) and accumulates 0.1 exhaustion per meter."
+        },
+        {
+          "id": "test_sprint_jump_exhaustion.TestSprintJumpExhaustion.test_02_sprint_jump_compound_exhaustion",
+          "name": "test_02_sprint_jump_compound_exhaustion",
+          "status": "PASS",
+          "duration": 5.8200000239594374e-05,
+          "description": "Verify sprint-jump compounds both sprint exhaustion (0.1/m) and jump exhaustion (0.8/jump)."
+        },
+        {
+          "id": "test_sprint_jump_exhaustion.TestSprintJumpExhaustion.test_03_saturation_exhaustion_drain_into_hunger",
+          "name": "test_03_saturation_exhaustion_drain_into_hunger",
+          "status": "PASS",
+          "duration": 1.4700000065204222e-05,
+          "description": "Verify exhaustion drains saturation first; once saturation is 0, hunger food points drain."
+        },
+        {
+          "id": "test_sprint_jump_exhaustion.TestSprintJumpExhaustion.test_04_hunger_threshold_disables_sprinting",
+          "name": "test_04_hunger_threshold_disables_sprinting",
+          "status": "PASS",
+          "duration": 0.0005754999992859666,
+          "description": "Verify when hunger drops to <= 6.0, sprinting is disabled and speed reverts to walking."
+        },
+        {
+          "id": "test_sprint_jump_exhaustion.TestSprintJumpExhaustion.test_05_dynamic_fov_warping_and_decay",
+          "name": "test_05_dynamic_fov_warping_and_decay",
+          "status": "PASS",
+          "duration": 2.519999998185085e-05,
+          "description": "Verify dynamic FOV expands to 1.15x on sprint, then decays to 1.0x when sprinting stops."
+        }
+      ]
+    },
+    "tier4": {
+      "name": "Tier 4: Real-World Workloads",
+      "description": "First Day Survival 14-step progression, fatal fall death/respawn, 1200s celestial diurnal cycle",
+      "total_tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "duration_seconds": 0.0009,
+      "status": "PASS",
+      "tests": [
+        {
+          "id": "test_celestial_day_night_workflow.TestCelestialDayNightWorkflow.test_01_zenith_noon_sun_elevation",
+          "name": "test_01_zenith_noon_sun_elevation",
+          "status": "PASS",
+          "duration": 4.4999999772699084e-05,
+          "description": "Verify noon at t=300s (phi = pi/2) puts sun near zenith (+Y)."
+        },
+        {
+          "id": "test_celestial_day_night_workflow.TestCelestialDayNightWorkflow.test_02_midnight_sun_nadir_and_night_darkness",
+          "name": "test_02_midnight_sun_nadir_and_night_darkness",
+          "status": "PASS",
+          "duration": 1.9299999621580355e-05,
+          "description": "Verify midnight at t=900s (phi = 3pi/2) puts sun below horizon and daylight factor is 0.0."
+        },
+        {
+          "id": "test_celestial_day_night_workflow.TestCelestialDayNightWorkflow.test_03_dawn_and_dusk_horizons",
+          "name": "test_03_dawn_and_dusk_horizons",
+          "status": "PASS",
+          "duration": 1.500000053056283e-05,
+          "description": "Verify sunrise (t=0s, phi=0) and sunset (t=600s, phi=pi) align with horizon."
+        },
+        {
+          "id": "test_celestial_day_night_workflow.TestCelestialDayNightWorkflow.test_04_directional_face_shading_factors",
+          "name": "test_04_directional_face_shading_factors",
+          "status": "PASS",
+          "duration": 1.3099999705445953e-05,
+          "description": "Verify directional face occlusion constants: Top 1.00, Bottom 0.50, N/S 0.80, E/W 0.60."
+        },
+        {
+          "id": "test_celestial_day_night_workflow.TestCelestialDayNightWorkflow.test_05_smooth_24h_cycle_continuity",
+          "name": "test_05_smooth_24h_cycle_continuity",
+          "status": "PASS",
+          "duration": 0.00016059999961726135,
+          "description": "Verify sun trajectory and daylight factor vary continuously without discontinuities over 1200s."
+        },
+        {
+          "id": "test_death_respawn_workflow.TestDeathRespawnWorkflow.test_01_non_fatal_fall_damage_equation",
+          "name": "test_01_non_fatal_fall_damage_equation",
+          "status": "PASS",
+          "duration": 3.130000004603062e-05,
+          "description": "Verify non-fatal fall damage: ceil(d - 3.0). Fall from 6m deals exactly 3 damage."
+        },
+        {
+          "id": "test_death_respawn_workflow.TestDeathRespawnWorkflow.test_02_water_impact_damage_negation",
+          "name": "test_02_water_impact_damage_negation",
+          "status": "PASS",
+          "duration": 7.559999994555255e-05,
+          "description": "Verify falling 50m directly into water completely negates all fall damage."
+        },
+        {
+          "id": "test_death_respawn_workflow.TestDeathRespawnWorkflow.test_03_fatal_fall_damage_triggers_death",
+          "name": "test_03_fatal_fall_damage_triggers_death",
+          "status": "PASS",
+          "duration": 2.390000008745119e-05,
+          "description": "Verify falling 25m deals 22 damage, reducing 20 HP to 0 and marking player dead."
+        },
+        {
+          "id": "test_death_respawn_workflow.TestDeathRespawnWorkflow.test_04_inventory_items_scatter_on_death",
+          "name": "test_04_inventory_items_scatter_on_death",
+          "status": "PASS",
+          "duration": 4.350000017439015e-05,
+          "description": "Verify upon death, all carried inventory items drop at the death location."
+        },
+        {
+          "id": "test_death_respawn_workflow.TestDeathRespawnWorkflow.test_05_respawn_restores_health_hunger_and_clears_inventory",
+          "name": "test_05_respawn_restores_health_hunger_and_clears_inventory",
+          "status": "PASS",
+          "duration": 2.2600000193051528e-05,
+          "description": "Verify respawn restores HP to 20, Hunger to 20, is_alive to True, and resets position."
+        },
+        {
+          "id": "test_first_day_survival.TestFirstDaySurvival.test_complete_first_day_survival_progression",
+          "name": "test_complete_first_day_survival_progression",
+          "status": "PASS",
+          "duration": 0.00032909999936237,
+          "description": "Execute end-to-end First Day Survival canonical gameplay session."
+        }
+      ]
+    }
+  }
+}

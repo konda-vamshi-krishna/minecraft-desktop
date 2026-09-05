@@ -1,0 +1,33 @@
+// res/resource.rc - Win32 Metadata and Manifest Embedder
+// ponytail: hardcoded version resource -> auto-generated version.rc from git tag during CI build
+
+101 ICON "res/icon.ico"
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEOS          0x40004
+FILETYPE        0x1
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "Minecraft Desktop Open Source Team"
+            VALUE "FileDescription",  "Minecraft Desktop - Universal Native Voxel Engine"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "minecraft-desktop"
+            VALUE "LegalCopyright",   "Copyright (C) 2026"
+            VALUE "OriginalFilename", "minecraft.exe"
+            VALUE "ProductName",      "Minecraft Desktop"
+            VALUE "ProductVersion",   "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+// Embed DPI Awareness & Execution Level Manifest
+1 24 "res/app.manifest"

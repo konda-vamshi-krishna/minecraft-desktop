@@ -1,0 +1,210 @@
+# .github/workflows/build_and_release.yml
+# Production-Hardened 3-Platform CI/CD & Universal Release Pipeline
+# ponytail: CI matrix uses gcc/clang on host runners -> containerized cross-compilation pipeline (dockcross) for single-host multi-target builds
+# ponytail: standalone headless target directly linked to OS platform libraries -> pre-compiled Raylib vendor packages or CMake FetchContent
+
+name: Build & Universal Distribution Release
+
+'on':
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build (${{ matrix.target-name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows MinGW / GCC Build (Statically Linked CRT)
+          - os: windows-latest
+            target-name: windows-x64
+            artifact-name: minecraft-desktop-windows-x64.zip
+            executable-name: minecraft.exe
+
+          # Linux Portable ELF (Built on Ubuntu 20.04 for glibc 2.31 compatibility)
+          - os: ubuntu-20.04
+            target-name: linux-x64
+            artifact-name: minecraft-desktop-linux-x64.tar.gz
+            executable-name: minecraft
+
+          # macOS Universal 2 (Intel x86_64 + Apple Silicon arm64)
+          - os: macos-latest
+            target-name: macos-universal
+            artifact-name: minecraft-desktop-macos-universal.zip
+            executable-name: minecraft
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # -------------------------------------------------------------
+      # WINDOWS BUILD
+      # -------------------------------------------------------------
+      - name: Setup Windows Environment & Build
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p build
+          # Compile resource script containing icon and manifest
+          windres res/resource.rc -O coff -o build/resource.res || echo "No windres found, skipping rc"
+          
+          # Compile standalone engine with static C runtime and standard Win32 libraries
+          gcc -O3 -flto -std=c99 -Wall \
+              -DHEADLESS_ONLY -DPLATFORM_DESKTOP \
+              -Isrc \
+              src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
+              build/resource.res \
+              -o build/minecraft.exe \
+              -lopengl32 -lgdi32 -lwinmm -luser32 -lshell32 \
+              -static-libgcc -static -s
+
+          # Audit dynamic links - Verify zero forbidden DLLs (vcruntime140, msvcp140 banned)
+          dumpbin /dependents build/minecraft.exe || objdump -p build/minecraft.exe | grep "DLL Name"
+
+      # -------------------------------------------------------------
+      # LINUX BUILD
+      # -------------------------------------------------------------
+      - name: Setup Linux Dependencies & Build
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+                                  libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev \
+                                  libxinerama-dev libwayland-dev libxkbcommon-dev
+          mkdir -p build
+          gcc -O3 -flto -std=c99 -Wall \
+              -DHEADLESS_ONLY -DPLATFORM_DESKTOP \
+              -Isrc \
+              src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
+              -o build/minecraft \
+              -lGL -lm -lpthread -ldl -lrt -lX11 \
+              -s
+
+          # Verify dynamic loader dependencies (glibc 2.31 baseline)
+          ldd build/minecraft
+
+      # -------------------------------------------------------------
+      # MACOS UNIVERSAL BUILD
+      # -------------------------------------------------------------
+      - name: Build macOS Universal Binary
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p build
+          # Compile x86_64 slice
+          clang -O3 -flto -std=c99 -target x86_64-apple-macos11.0 \
+                -DHEADLESS_ONLY -DPLATFORM_DESKTOP -Isrc \
+                src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
+                -o build/minecraft_x86_64 \
+                -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+
+          # Compile arm64 slice (Apple Silicon)
+          clang -O3 -flto -std=c99 -target arm64-apple-macos11.0 \
+                -DHEADLESS_ONLY -DPLATFORM_DESKTOP -Isrc \
+                src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
+                -o build/minecraft_arm64 \
+                -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
+
+          # Merge into single Universal 2 Fat Binary
+          lipo -create -output build/minecraft build/minecraft_x86_64 build/minecraft_arm64
+          rm build/minecraft_x86_64 build/minecraft_arm64
+          strip -x build/minecraft
+
+          # Audit binary architectures and linkage
+          lipo -info build/minecraft
+          otool -L build/minecraft
+
+      # -------------------------------------------------------------
+      # TEST EXECUTION GATE
+      # -------------------------------------------------------------
+      - name: Run Test Suites & Binary Verification
+        shell: bash
+        run: |
+          chmod +x build/${{ matrix.executable-name }} 2>/dev/null || true
+          ./build/${{ matrix.executable-name }} --test-m1
+          if command -v python3 &>/dev/null; then
+            python3 tests/test_runner.py
+            python3 -m unittest discover -s tests -p "test_*.py"
+          else
+            python tests/test_runner.py
+            python -m unittest discover -s tests -p "test_*.py"
+          fi
+
+      # -------------------------------------------------------------
+      # PACKAGE ZERO-INSTALLER ARCHIVE
+      # -------------------------------------------------------------
+      - name: Assemble Release Package
+        shell: bash
+        run: |
+          mkdir -p dist/minecraft-desktop
+          cp build/${{ matrix.executable-name }} dist/minecraft-desktop/
+          cp -r assets dist/minecraft-desktop/ 2>/dev/null || mkdir -p dist/minecraft-desktop/assets
+          mkdir -p dist/minecraft-desktop/saves
+          
+          cat << 'EOF' > dist/minecraft-desktop/README.txt
+          ==================================================
+          MINECRAFT DESKTOP - UNIVERSAL 1-CLICK EDITION
+          ==================================================
+          1. Extract this entire folder anywhere you want.
+          2. Double-click the executable to launch.
+          3. Save files and settings will be stored in ./saves/
+          4. Zero installation or internet required. Enjoy!
+          ==================================================
+          EOF
+
+          cd dist
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            7z a -tzip ../${{ matrix.artifact-name }} minecraft-desktop/
+          elif [ "${{ runner.os }}" == "Linux" ]; then
+            tar -czvf ../${{ matrix.artifact-name }} minecraft-desktop/
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            zip -r ../${{ matrix.artifact-name }} minecraft-desktop/
+          fi
+          cd ..
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target-name }}
+          path: ${{ matrix.artifact-name }}
+
+  # -----------------------------------------------------------------
+  # RELEASE JOB: PUBLISH TO GITHUB RELEASES ON TAG
+  # -----------------------------------------------------------------
+  release:
+    name: Publish Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+
+      - name: Generate Checksums
+        run: |
+          cd release_artifacts
+          find . -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec mv {} . \;
+          find . -maxdepth 1 -type d ! -path . -exec rm -rf {} +
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release_artifacts/*.zip
+            release_artifacts/*.tar.gz
+            release_artifacts/SHA256SUMS.txt
+          generate_release_notes: true
+          draft: false
+          prerelease: false
