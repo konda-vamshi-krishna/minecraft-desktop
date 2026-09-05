@@ -130,7 +130,7 @@ jobs:
         run: |
           chmod +x build/${{ matrix.executable-name }} 2>/dev/null || true
           ./build/${{ matrix.executable-name }} --test-m1
-          python -m pip install pyyaml numpy jsonschema 2>/dev/null || python3 -m pip install pyyaml numpy jsonschema 2>/dev/null || true
+          python -m pip install --break-system-packages pyyaml numpy jsonschema 2>/dev/null || python3 -m pip install --break-system-packages pyyaml numpy jsonschema 2>/dev/null || python -m pip install pyyaml numpy jsonschema 2>/dev/null || true
           if command -v python3 &>/dev/null; then
             python3 tests/test_runner.py
             python3 -m unittest discover -s tests -p "test_*.py"

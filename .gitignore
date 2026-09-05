@@ -12,6 +12,8 @@ obj/
 
 # Saves & Local Data
 saves/
+installed_game/
+release_windows/
 *.log
 
 # Python Cache

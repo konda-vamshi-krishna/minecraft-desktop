@@ -1,3 +1,12 @@
+#if defined(__linux__) || defined(__APPLE__)
+    #ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 200809L
+    #endif
+    #ifndef _DEFAULT_SOURCE
+    #define _DEFAULT_SOURCE
+    #endif
+#endif
+
 #include "platform.h"
 #include <stdio.h>
 #include <stdlib.h>

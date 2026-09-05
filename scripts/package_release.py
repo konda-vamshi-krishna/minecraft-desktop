@@ -64,7 +64,7 @@ def detect_executable_name(build_dir: str, preferred: str = None) -> str:
     if system == "windows":
         candidates = ["minecraft.exe", "minecraft_headless.exe", "minecraft"]
     else:
-        candidates = ["minecraft", "minecraft_headless", "minecraft.exe"]
+        candidates = ["minecraft", "minecraft_headless", "minecraft.exe", "minecraft_headless.exe"]
 
     for name in candidates:
         if os.path.exists(os.path.join(build_dir, name)):
