@@ -438,11 +438,14 @@ void World_Render(const Camera* camera, float renderAlpha) {
     // Compute Model-View-Projection matrix from current Raylib 3D camera
     Matrix matModelView = rlGetMatrixModelview();
     Matrix matProjection = rlGetMatrixProjection();
-    Matrix matMVP = MatrixMultiply(matModelView, matProjection);
+    Mat4 mv, pr;
+    memcpy(&mv, &matModelView, sizeof(Mat4));
+    memcpy(&pr, &matProjection, sizeof(Mat4));
+    Mat4 matMVP = Mat4_Multiply(&pr, &mv);
 
     int* defaultLocs = rlGetShaderLocsDefault();
     if (defaultLocs && defaultLocs[RL_SHADER_LOC_MATRIX_MVP] != -1) {
-        rlSetUniformMatrix(defaultLocs[RL_SHADER_LOC_MATRIX_MVP], matMVP);
+        rlSetUniformMatrix(defaultLocs[RL_SHADER_LOC_MATRIX_MVP], *(Matrix*)&matMVP);
     }
     if (defaultLocs && defaultLocs[RL_SHADER_LOC_COLOR_DIFFUSE] != -1) {
         float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
