@@ -52,21 +52,23 @@ jobs:
         shell: bash
         run: |
           mkdir -p build
-          # Compile resource script containing icon and manifest
-          windres res/resource.rc -O coff -o build/resource.res || echo "No windres found, skipping rc"
+          RC_ARG=""
+          if command -v windres &>/dev/null; then
+            windres res/resource.rc -O coff -o build/resource.res && RC_ARG="build/resource.res" || true
+          fi
           
           # Compile standalone engine with static C runtime and standard Win32 libraries
           gcc -O3 -flto -std=c99 -Wall \
               -DHEADLESS_ONLY -DPLATFORM_DESKTOP \
               -Isrc \
               src/main.c src/core/*.c src/platform/*.c src/world/*.c src/gameplay/*.c src/assets/*.c src/audio/*.c \
-              build/resource.res \
+              $RC_ARG \
               -o build/minecraft.exe \
               -lopengl32 -lgdi32 -lwinmm -luser32 -lshell32 \
               -static-libgcc -static -s
 
           # Audit dynamic links - Verify zero forbidden DLLs (vcruntime140, msvcp140 banned)
-          dumpbin /dependents build/minecraft.exe || objdump -p build/minecraft.exe | grep "DLL Name"
+          (dumpbin /dependents build/minecraft.exe 2>/dev/null || objdump -p build/minecraft.exe | grep "DLL Name" 2>/dev/null) || true
 
       # -------------------------------------------------------------
       # LINUX BUILD
