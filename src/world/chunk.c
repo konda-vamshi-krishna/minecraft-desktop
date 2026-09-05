@@ -15,6 +15,12 @@
     #include <rlgl.h>
     #undef Camera
     #undef Ray
+
+    #if defined(RAYLIB_VERSION_MAJOR) && (RAYLIB_VERSION_MAJOR >= 6)
+        #define RL_ATTRIB_OFFSET(n) (n)
+    #else
+        #define RL_ATTRIB_OFFSET(n) ((const void*)(uintptr_t)(n))
+    #endif
 #else
     #define USE_RAYLIB 0
 #endif
@@ -152,11 +158,11 @@ void Chunk_UploadGPU(Chunk* chunk, const ChunkMesh* mesh) {
     rlEnableVertexArray(chunk->vaoId);
 
     chunk->vboId = rlLoadVertexBuffer(s_GpuScratchVertices, (int)(mesh->vertexCount * sizeof(GpuVertex)), false);
-    rlSetVertexAttribute(0, 3, RL_FLOAT, false, sizeof(GpuVertex), 0);
+    rlSetVertexAttribute(0, 3, RL_FLOAT, false, sizeof(GpuVertex), RL_ATTRIB_OFFSET(0));
     rlEnableVertexAttribute(0);
-    rlSetVertexAttribute(1, 2, RL_FLOAT, false, sizeof(GpuVertex), 12);
+    rlSetVertexAttribute(1, 2, RL_FLOAT, false, sizeof(GpuVertex), RL_ATTRIB_OFFSET(12));
     rlEnableVertexAttribute(1);
-    rlSetVertexAttribute(3, 4, RL_UNSIGNED_BYTE, true, sizeof(GpuVertex), 20);
+    rlSetVertexAttribute(3, 4, RL_UNSIGNED_BYTE, true, sizeof(GpuVertex), RL_ATTRIB_OFFSET(20));
     rlEnableVertexAttribute(3);
 
     chunk->iboId = rlLoadVertexBufferElement(s_GpuScratchIndices, (int)(mesh->indexCount * sizeof(uint16_t)), false);

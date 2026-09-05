@@ -675,7 +675,7 @@ static void App_OnRenderFrame(float alpha) {
 
             DrawRectangle(sx, sy, slotSize, slotSize, (Color){ 25, 25, 25, 200 });
 
-            bool isSelected = (s == s_Game.inventory.selectedHotbarIndex);
+            bool isSelected = (s == s_Game.inventory.selectedHotbarSlot);
             if (isSelected) {
                 DrawRectangleLinesEx((Rectangle){ (float)sx - 2, (float)sy - 2, (float)slotSize + 4, (float)slotSize + 4 }, 2.0f, (Color){ 255, 255, 255, 255 });
             } else {
