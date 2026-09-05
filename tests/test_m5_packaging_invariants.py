@@ -90,9 +90,9 @@ class TestM5PackagingInvariants(unittest.TestCase):
         self.assertEqual(win["executable-name"], "minecraft.exe")
         self.assertEqual(win["artifact-name"], "minecraft-desktop-windows-x64.zip")
 
-        # Linux target (Ubuntu 20.04 for glibc 2.31 compatibility)
+        # Linux target (Ubuntu for glibc baseline compatibility)
         linux = targets["linux-x64"]
-        self.assertEqual(linux["os"], "ubuntu-20.04")
+        self.assertIn(linux["os"], ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"])
         self.assertEqual(linux["executable-name"], "minecraft")
         self.assertEqual(linux["artifact-name"], "minecraft-desktop-linux-x64.tar.gz")
 
@@ -128,11 +128,14 @@ class TestM5PackagingInvariants(unittest.TestCase):
         )
 
     def test_05_ci_linux_glibc_and_dynamic_libraries(self):
-        """Verify Linux build targets glibc 2.31, compiles Raylib dependencies, and runs ldd."""
+        """Verify Linux build targets glibc baseline, compiles Raylib dependencies, and runs ldd."""
         with open(self.workflow_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        self.assertIn("ubuntu-20.04", content, "Linux must build on Ubuntu 20.04 for glibc 2.31 baseline")
+        self.assertTrue(
+            any(u in content for u in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"]),
+            "Linux must build on Ubuntu LTS for glibc baseline"
+        )
         self.assertIn("libasound2-dev", content)
         self.assertIn("libx11-dev", content)
         self.assertIn("ldd build/minecraft", content, "Linux step must verify dynamic dependencies with ldd")

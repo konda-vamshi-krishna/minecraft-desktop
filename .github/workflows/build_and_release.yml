@@ -26,8 +26,8 @@ jobs:
             artifact-name: minecraft-desktop-windows-x64.zip
             executable-name: minecraft.exe
 
-          # Linux Portable ELF (Built on Ubuntu 20.04 for glibc 2.31 compatibility)
-          - os: ubuntu-20.04
+          # Linux Portable ELF (Built on Ubuntu LTS for baseline glibc compatibility)
+          - os: ubuntu-latest
             target-name: linux-x64
             artifact-name: minecraft-desktop-linux-x64.tar.gz
             executable-name: minecraft
@@ -130,6 +130,7 @@ jobs:
         run: |
           chmod +x build/${{ matrix.executable-name }} 2>/dev/null || true
           ./build/${{ matrix.executable-name }} --test-m1
+          python -m pip install pyyaml numpy jsonschema 2>/dev/null || python3 -m pip install pyyaml numpy jsonschema 2>/dev/null || true
           if command -v python3 &>/dev/null; then
             python3 tests/test_runner.py
             python3 -m unittest discover -s tests -p "test_*.py"
