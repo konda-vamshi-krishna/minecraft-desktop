@@ -1,8 +1,73 @@
 # Minecraft Desktop (Universal 1-Click Edition)
 
-A standalone, universal single-click desktop Minecraft game clone distributable directly via GitHub Releases, requiring **zero external runtime installations or configuration** for end users on Windows, Linux, and macOS.
+[![GitHub Release](https://img.shields.io/github/v/release/konda-vamshi-krishna/minecraft-desktop?style=for-the-badge&color=2ea44f)](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-Download%20x64%20(Zip)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-windows-x64.zip)
+[![Linux](https://img.shields.io/badge/Linux-Download%20x64%20(Tar.gz)-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-linux-x64.tar.gz)
+[![macOS](https://img.shields.io/badge/macOS-Download%20Universal%20(Zip)-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-macos-universal.zip)
+
+A standalone, universal single-click desktop Minecraft game clone requiring **zero external runtime installations or configuration** for end users on Windows, Linux, and macOS.
 
 Built strictly in accordance with **ISO C99**, **Minecraft Java Edition canonical physics constants**, and **Ponytail minimal-complexity principles** (zero unnecessary abstractions, zero heap allocation in critical paths).
+
+---
+
+> [!WARNING]
+> ### ⚠️ DO NOT CLICK THE GREEN "CODE -> DOWNLOAD ZIP" BUTTON TO PLAY!
+> Clicking GitHub's green **`<> Code`** button and selecting **"Download ZIP"** downloads the **raw C source code repository**, not the playable game executable!
+> 
+> **To download and play the game immediately, click the direct download links in the table below:**
+
+## 📥 Direct 1-Click Downloads (Playable Binaries)
+
+| Operating System | Architecture | Package | Direct Download Link |
+|---|---|---|---|
+| **Windows 10 / 11** | 64-bit (x86_64) | Standalone `.zip` | 👉 [**Download Windows Version (.zip)**](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-windows-x64.zip) |
+| **Linux** (Ubuntu, Fedora, Arch, etc.) | 64-bit (glibc 2.31+) | Portable `.tar.gz` | 👉 [**Download Linux Version (.tar.gz)**](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-linux-x64.tar.gz) |
+| **macOS** (Apple Silicon M1/M2/M3 + Intel) | Universal 2 Fat Binary | Portable `.zip` | 👉 [**Download macOS Version (.zip)**](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-macos-universal.zip) |
+| **Checksums** | SHA-256 Hashes | Text file | 👉 [**Download SHA256SUMS.txt**](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/SHA256SUMS.txt) |
+
+---
+
+## 🎮 How to Play on Windows 11 (3 Simple Steps)
+
+1. **Download**: Click the [**Download Windows Version**](https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-windows-x64.zip) button above.
+2. **Extract**: Right-click the downloaded `minecraft-desktop-windows-x64.zip` file -> select **Extract All...** -> choose a folder (e.g., Desktop).
+3. **Play**: Open the folder and double-click **`minecraft.exe`**!
+
+> [!NOTE]
+> **Windows 11 SmartScreen Notice**: Because this is an open-source binary built from GitHub Actions, Windows SmartScreen may show a popup saying *"Windows protected your PC"*. Simply click **"More info"** and then **"Run anyway"**.
+
+### ⌨️ Default Controls
+* **W, A, S, D**: Walk / Strafe
+* **Space**: Jump (plays procedural jump sound)
+* **Left Shift**: Sneak (clamps player to block edges so you cannot fall off cliffs)
+* **Left Ctrl**: Sprint (widens camera FOV)
+* **Mouse**: Free-look camera
+* **Left Click**: Mine / Break block (10-stage crack animation + drop items)
+* **Right Click**: Place block (with anti-suffocation player protection)
+* **1–9 / Scroll Wheel**: Hotbar item selection
+* **Esc**: Release mouse cursor / Pause
+
+---
+
+## 💻 1-Line Terminal Launchers
+
+If you prefer using your terminal, copy and paste one of these single-line commands:
+
+### Windows (PowerShell)
+```powershell
+curl.exe -L -o minecraft-win.zip "https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-windows-x64.zip"; Expand-Archive minecraft-win.zip -DestinationPath game; cd game/minecraft-desktop; .\minecraft.exe
+```
+
+### Linux (Bash)
+```bash
+curl -sSL -o minecraft-linux.tar.gz "https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-linux-x64.tar.gz" && tar -xzf minecraft-linux.tar.gz && cd minecraft-desktop && ./minecraft
+```
+
+### macOS (Zsh / Terminal)
+```bash
+curl -sSL -o minecraft-mac.zip "https://github.com/konda-vamshi-krishna/minecraft-desktop/releases/latest/download/minecraft-desktop-macos-universal.zip" && unzip minecraft-mac.zip && cd minecraft-desktop && ./minecraft
+```
 
 ---
 
@@ -34,76 +99,18 @@ Built strictly in accordance with **ISO C99**, **Minecraft Java Edition canonica
 
 ---
 
-## 📁 Repository Structure
+## 🛠️ For Developers (Source Code)
 
-```
-g:/minecraft_desktop/
-├── .github/
-│   └── workflows/
-│       └── build_and_release.yml   # 3-platform GitHub Actions build & release matrix
-├── docs/                           # 6 canonical architecture & gameplay specification docs
-├── res/                            # Windows manifest, resource script, and icon
-│   ├── app.manifest
-│   ├── icon.ico
-│   └── resource.rc
-├── scripts/
-│   └── package_release.py          # Standalone zero-installer release packager
-├── src/
-│   ├── assets/                     # Embedded 256x256 RGBA atlas (.rodata)
-│   ├── audio/                      # 16-voice real-time procedural synthesizer
-│   ├── core/                       # 60Hz loop accumulator, runtime hooks, math utilities
-│   ├── gameplay/                   # Swept AABB physics, DDA raycast, interaction, inventory
-│   ├── platform/                   # Win32, Linux, macOS platform abstractions
-│   ├── world/                      # Simplex terrain, chunk storage, 3-axis greedy mesher
-│   └── main.c                      # Integrated engine entry point
-├── tests/
-│   ├── canonical_models.py         # Ground-truth Python specification oracle
-│   ├── test_runner.py              # Master opaque-box 4-tier E2E test runner (105 tests)
-│   ├── test_m3_gameplay.py         # 30-test M3 gameplay & physics invariant suite
-│   └── ...                         # Subsystem invariant & boundary tests (279 tests)
-├── CMakeLists.txt                  # Universal CMake build specification
-└── Makefile                        # Native GNU Makefile compiling all 12 translation units
-```
+If you are a developer and want to inspect, modify, or build the C source code:
 
----
+```bash
+# Clone the repository
+git clone https://github.com/konda-vamshi-krishna/minecraft-desktop.git
+cd minecraft-desktop
 
-## 🧪 Testing & Verification
-
-The project is backed by a 100% passing automated test suite with zero external third-party dependencies (pure Python standard library):
-
-```powershell
-# 1. Run Master Opaque-Box E2E Runner (105 tests)
+# Run the 105-test opaque-box E2E test suite
 python tests/test_runner.py
 
-# 2. Run Full Repository Discovery Suite (279 tests)
+# Run the full 279-test repository discovery suite
 python -m unittest discover -s tests -p "test_*.py"
-
-# 3. Run Milestone 3 Gameplay & Physics Suite (30 tests)
-python -m unittest tests/test_m3_gameplay.py
-
-# 4. Dry-Run Zero-Installer Packaging Utility
-python scripts/package_release.py --allow-missing-exe --archive zip
 ```
-
----
-
-## 🚀 Building & Releasing
-
-### Native Cross-Compilation (GitHub Actions)
-All native cross-compilation is automated via [`.github/workflows/build_and_release.yml`](.github/workflows/build_and_release.yml).
-
-To release a new version:
-1. Commit all files:
-   ```bash
-   git add .
-   git commit -m "feat: Minecraft Desktop Universal 1-Click Edition v1.0.0"
-   ```
-2. Tag the release:
-   ```bash
-   git tag v1.0.0
-   ```
-3. Push to your GitHub repository:
-   ```bash
-   git push origin main --tags
-   ```
-GitHub Actions will automatically build Windows `.exe`, Linux ELF, and macOS Universal 2 binaries, package them into standalone `.zip` and `.tar.gz` archives with SHA256 checksums, and publish them to GitHub Releases.
