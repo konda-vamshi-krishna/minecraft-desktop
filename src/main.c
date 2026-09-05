@@ -30,7 +30,11 @@
 
 #if !defined(HEADLESS_ONLY) && (defined(HAVE_RAYLIB) || (defined(__has_include) && __has_include(<raylib.h>)))
     #define USE_RAYLIB 1
+    #define Camera RaylibCamera
+    #define Ray RaylibRay
     #include <raylib.h>
+    #undef Camera
+    #undef Ray
 #else
     #define USE_RAYLIB 0
 #endif

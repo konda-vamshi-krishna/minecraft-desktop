@@ -130,10 +130,6 @@ typedef struct ChunkNeighbors {
     const Chunk* posZ; // chunkX, chunkZ + 1
 } ChunkNeighbors;
 
-// Forward declaration for camera rendering
-struct Camera;
-typedef struct Camera Camera;
-
 // =============================================================================
 // World Subsystem API Signatures (runtime.h ↔ world.h)
 // =============================================================================

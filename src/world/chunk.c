@@ -9,8 +9,12 @@
 
 #if !defined(HEADLESS_ONLY) && (defined(HAVE_RAYLIB) || (defined(__has_include) && __has_include(<raylib.h>)))
     #define USE_RAYLIB 1
+    #define Camera RaylibCamera
+    #define Ray RaylibRay
     #include <raylib.h>
     #include <rlgl.h>
+    #undef Camera
+    #undef Ray
 #else
     #define USE_RAYLIB 0
 #endif
@@ -150,9 +154,9 @@ void Chunk_UploadGPU(Chunk* chunk, const ChunkMesh* mesh) {
     chunk->vboId = rlLoadVertexBuffer(s_GpuScratchVertices, (int)(mesh->vertexCount * sizeof(GpuVertex)), false);
     rlSetVertexAttribute(0, 3, RL_FLOAT, false, sizeof(GpuVertex), 0);
     rlEnableVertexAttribute(0);
-    rlSetVertexAttribute(1, 2, RL_FLOAT, false, sizeof(GpuVertex), (const void*)12);
+    rlSetVertexAttribute(1, 2, RL_FLOAT, false, sizeof(GpuVertex), 12);
     rlEnableVertexAttribute(1);
-    rlSetVertexAttribute(3, 4, RL_UNSIGNED_BYTE, true, sizeof(GpuVertex), (const void*)20);
+    rlSetVertexAttribute(3, 4, RL_UNSIGNED_BYTE, true, sizeof(GpuVertex), 20);
     rlEnableVertexAttribute(3);
 
     chunk->iboId = rlLoadVertexBufferElement(s_GpuScratchIndices, (int)(mesh->indexCount * sizeof(uint16_t)), false);
