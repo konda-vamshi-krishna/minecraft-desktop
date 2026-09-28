@@ -10,21 +10,27 @@ LDFLAGS ?=
 
 # OS-specific link flags and directory commands
 ifeq ($(OS),Windows_NT)
-    WIN_LIBS = -lopengl32 -lgdi32 -lwinmm -luser32 -lshell32
+    HEADLESS_LIBS = -lwinmm
+    APP_LIBS = -lopengl32 -lgdi32 -lwinmm -luser32 -lshell32
     BIN_EXT = .exe
     MKDIR = if not exist build mkdir build
     RM = rmdir /s /q build 2>nul || true
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        WIN_LIBS = -lm -framework IOKit -framework Cocoa -framework OpenGL -framework CoreVideo
+        HEADLESS_LIBS = -lm
+        APP_LIBS = -lm -framework IOKit -framework Cocoa -framework OpenGL -framework CoreVideo
     else
-        WIN_LIBS = -lGL -lm -lpthread -ldl -lrt -lX11
+        HEADLESS_LIBS = -lm -lpthread -ldl -lrt
+        APP_LIBS = -lGL -lm -lpthread -ldl -lrt -lX11
     endif
     BIN_EXT =
     MKDIR = mkdir -p build
     RM = rm -rf build
 endif
+
+# Backward compatibility alias
+WIN_LIBS = $(HEADLESS_LIBS)
 
 # Core subsystem sources (all 6 subsystems)
 SRCS_CORE = \
@@ -53,14 +59,14 @@ headless: $(TARGET_HEADLESS)
 
 $(TARGET_HEADLESS): $(SRCS_CORE) $(SRCS_MAIN)
 	@$(MKDIR)
-	$(CC) $(CFLAGS) -DHEADLESS_ONLY $^ -o $@ $(LDFLAGS) $(WIN_LIBS)
+	$(CC) $(CFLAGS) -DHEADLESS_ONLY $^ -o $@ $(LDFLAGS) $(HEADLESS_LIBS)
 
 # Full target with Raylib (if raylib is installed/provided in system)
 app: $(TARGET_APP)
 
 $(TARGET_APP): $(SRCS_CORE) $(SRCS_MAIN)
 	@$(MKDIR)
-	$(CC) $(CFLAGS) -DHAVE_RAYLIB $^ -o $@ $(LDFLAGS) -lraylib $(WIN_LIBS)
+	$(CC) $(CFLAGS) -DHAVE_RAYLIB $^ -o $@ $(LDFLAGS) -lraylib $(APP_LIBS)
 
 test: $(TARGET_HEADLESS)
 	$(TARGET_HEADLESS) --test-m1

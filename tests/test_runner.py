@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Master E2E Test Runner for Minecraft Desktop — Universal 1-Click Native Edition.
-Executes 4-Tier test suite:
+Master E2E & Invariant Test Runner for Minecraft Desktop — Universal 1-Click Native Edition.
+Executes test suites across all architectural milestones and verification tiers:
   Tier 1: Functional Feature Verification (tests/tier1_features)
   Tier 2: Boundary Value Analysis & Corner Cases (tests/tier2_boundaries)
   Tier 3: Pairwise Cross-Feature Interactions (tests/tier3_interactions)
   Tier 4: Real-World Workload Scenarios (tests/tier4_workloads)
+  Milestones & Challengers: M1-M5 Invariants, Adversarial & Empirical Stress Suites
 
 CLI Usage:
-  python tests/test_runner.py [--tier 1,2,3,4] [--verbose] [--headless] [--json-report [PATH]]
+  python tests/test_runner.py [--tier 1,2,3,4] [--all] [--milestones] [--verbose] [--headless] [--json-report [PATH]]
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
@@ -64,6 +66,23 @@ TIER_CONFIG = {
     }
 }
 
+MILESTONE_MODULES = [
+    ("Milestone 1 Invariants", "tests/test_m1_c_invariants.py"),
+    ("Milestone 2 Invariants", "tests/test_m2_c_invariants.py"),
+    ("Milestone 2 Chunk Invariants", "tests/test_m2_chunk_invariants.py"),
+    ("Milestone 2 Mesher Canonical", "tests/test_mesher_canonical.py"),
+    ("Milestone 3 Gameplay Suite", "tests/test_m3_gameplay.py"),
+    ("Milestone 3 Invariants", "tests/test_m3_gameplay_invariants.py"),
+    ("Milestone 4 Assets & Audio", "tests/test_m4_assets_audio.py"),
+    ("Milestone 4 Adversarial", "tests/test_adversarial_m4.py"),
+    ("Milestone 5 Packaging", "tests/test_m5_packaging_invariants.py"),
+    ("Milestone 5 Adversarial", "tests/test_m5_adversarial_challenge.py"),
+    ("CLI Parsing Empirical Stress", "tests/test_cli_empirical_stress.py"),
+    ("Platform Challenger Suite", "tests/test_challenger_platform.py"),
+    ("Gameplay Challenger Suite", "tests/test_challenger_gameplay_adversarial.py"),
+    ("Remedy 2 Adversarial Suite", "tests/test_challenger_adversarial_remedy_2.py"),
+]
+
 
 class CustomTestResult(unittest.TestResult):
     def __init__(self, verbose: bool = False):
@@ -86,7 +105,7 @@ class CustomTestResult(unittest.TestResult):
         self.successes.append(test)
         self.test_records.append({
             "id": test.id(),
-            "name": test._testMethodName,
+            "name": getattr(test, "_testMethodName", str(test)),
             "status": "PASS",
             "duration": duration,
             "description": test.shortDescription() or ""
@@ -99,7 +118,7 @@ class CustomTestResult(unittest.TestResult):
         duration = time.perf_counter() - self._current_start_time
         self.test_records.append({
             "id": test.id(),
-            "name": test._testMethodName,
+            "name": getattr(test, "_testMethodName", str(test)),
             "status": "FAIL",
             "duration": duration,
             "error": self._exc_info_to_string(err, test),
@@ -113,7 +132,7 @@ class CustomTestResult(unittest.TestResult):
         duration = time.perf_counter() - self._current_start_time
         self.test_records.append({
             "id": test.id(),
-            "name": test._testMethodName,
+            "name": getattr(test, "_testMethodName", str(test)),
             "status": "ERROR",
             "duration": duration,
             "error": self._exc_info_to_string(err, test),
@@ -160,18 +179,41 @@ def run_tier(tier_num: int, verbose: bool = False) -> tuple[CustomTestResult, fl
     return result, total_time
 
 
-def print_banner(tiers: List[int], headless: bool):
+def run_single_file(filepath: str, verbose: bool = False) -> tuple[CustomTestResult, float]:
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    rel_path = os.path.relpath(filepath, project_root).replace('\\', '/')
+    mod_name = rel_path[:-3].replace('/', '.')
+
+    loader = unittest.TestLoader()
+    try:
+        suite = loader.loadTestsFromName(mod_name)
+    except Exception as e:
+        # Fallback to direct load
+        suite = loader.discover(os.path.dirname(filepath), pattern=os.path.basename(filepath))
+
+    result = CustomTestResult(verbose=verbose)
+    start_time = time.perf_counter()
+    suite.run(result)
+    total_time = time.perf_counter() - start_time
+
+    return result, total_time
+
+
+def print_banner(mode_str: str, headless: bool):
     print(f"\n{BOLD}{CYAN}================================================================================{RESET}")
     print(f"{BOLD}{CYAN}      MINECRAFT DESKTOP -- OPAQUE-BOX REQUIREMENT-DRIVEN E2E TEST RUNNER         {RESET}")
     print(f"{BOLD}{CYAN}================================================================================{RESET}")
     print(f"{DIM}Timestamp: {datetime.now(timezone.utc).isoformat()}{RESET}")
-    print(f"{DIM}Headless Mode: {GREEN}ENABLED{RESET}{DIM} | Active Tiers: {YELLOW}{tiers}{RESET}")
+    print(f"{DIM}Headless Mode: {GREEN}ENABLED{RESET}{DIM} | Scope: {YELLOW}{mode_str}{RESET}")
     print(f"{DIM}Zero Third-Party Dependencies: Pure Python 3 Standard Library{RESET}\n")
 
 
-def print_summary_table(tier_results: Dict[int, tuple[CustomTestResult, float]]):
+def print_summary_table(track_results: Dict[str, tuple[CustomTestResult, float]]):
     print(f"\n{BOLD}--------------------------------------------------------------------------------{RESET}")
-    print(f"{BOLD}{'Tier':<8} {'Scope / Feature Track':<32} {'Tests':<8} {'Pass':<8} {'Fail':<8} {'Duration':<10} {'Status':<10}{RESET}")
+    print(f"{BOLD}{'Track':<10} {'Scope / Feature Track':<36} {'Tests':<8} {'Pass':<8} {'Fail':<8} {'Duration':<10} {'Status':<10}{RESET}")
     print(f"--------------------------------------------------------------------------------")
 
     grand_total = 0
@@ -179,7 +221,7 @@ def print_summary_table(tier_results: Dict[int, tuple[CustomTestResult, float]])
     grand_failed = 0
     grand_duration = 0.0
 
-    for tier_num, (res, duration) in tier_results.items():
+    for track_key, (res, duration) in track_results.items():
         total = res.testsRun
         passed = len(res.successes)
         failed = len(res.failures) + len(res.errors)
@@ -191,28 +233,28 @@ def print_summary_table(tier_results: Dict[int, tuple[CustomTestResult, float]])
         grand_failed += failed
         grand_duration += duration
 
-        tier_title = f"Tier {tier_num}"
-        scope = TIER_CONFIG[tier_num]["name"].split(":")[1].strip()
+        track_label = track_key.split(":")[0].strip() if ":" in track_key else track_key
+        scope = track_key.split(":")[1].strip() if ":" in track_key else track_key
 
-        print(f"{BOLD}{tier_title:<8}{RESET} {scope:<32} {total:<8} {passed:<8} {failed:<8} {duration*1000:>6.1f}ms   {status_color}{BOLD}{status_text:<10}{RESET}")
+        print(f"{BOLD}{track_label:<10}{RESET} {scope:<36} {total:<8} {passed:<8} {failed:<8} {duration*1000:>6.1f}ms   {status_color}{BOLD}{status_text:<10}{RESET}")
 
     print(f"--------------------------------------------------------------------------------")
     pass_pct = (grand_passed / grand_total * 100.0) if grand_total > 0 else 0.0
     overall_color = GREEN if grand_failed == 0 and grand_total > 0 else RED
     overall_status = "ALL TESTS PASSED (100%)" if grand_failed == 0 and grand_total > 0 else "FAILURES DETECTED"
 
-    print(f"{BOLD}{'TOTAL':<41} {grand_total:<8} {grand_passed:<8} {grand_failed:<8} {grand_duration*1000:>6.1f}ms   {overall_color}{BOLD}{overall_status}{RESET}")
+    print(f"{BOLD}{'TOTAL':<47} {grand_total:<8} {grand_passed:<8} {grand_failed:<8} {grand_duration*1000:>6.1f}ms   {overall_color}{BOLD}{overall_status}{RESET}")
     print(f"{BOLD}Pass Rate: {overall_color}{pass_pct:.1f}%{RESET} | Total Execution Time: {grand_duration:.3f}s\n")
 
 
-def generate_json_report(filepath: str, tier_results: Dict[int, tuple[CustomTestResult, float]]):
+def generate_json_report(filepath: str, track_results: Dict[str, tuple[CustomTestResult, float]]):
     grand_total = 0
     grand_passed = 0
     grand_failed = 0
     grand_duration = 0.0
-    tiers_data = {}
+    tracks_data = {}
 
-    for tier_num, (res, duration) in tier_results.items():
+    for track_key, (res, duration) in track_results.items():
         total = res.testsRun
         passed = len(res.successes)
         failed = len(res.failures) + len(res.errors)
@@ -221,9 +263,8 @@ def generate_json_report(filepath: str, tier_results: Dict[int, tuple[CustomTest
         grand_failed += failed
         grand_duration += duration
 
-        tiers_data[f"tier{tier_num}"] = {
-            "name": TIER_CONFIG[tier_num]["name"],
-            "description": TIER_CONFIG[tier_num]["description"],
+        tracks_data[track_key] = {
+            "name": track_key,
             "total_tests": total,
             "passed": passed,
             "failed": failed,
@@ -233,7 +274,7 @@ def generate_json_report(filepath: str, tier_results: Dict[int, tuple[CustomTest
         }
 
     report = {
-        "report_type": "Minecraft Desktop E2E Test Suite Execution Report",
+        "report_type": "Minecraft Desktop E2E & Invariant Test Suite Execution Report",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "summary": {
             "total_tests": grand_total,
@@ -243,7 +284,7 @@ def generate_json_report(filepath: str, tier_results: Dict[int, tuple[CustomTest
             "duration_seconds": round(grand_duration, 4),
             "status": "PASS" if grand_failed == 0 and grand_total > 0 else "FAIL"
         },
-        "tiers": tiers_data
+        "tracks": tracks_data
     }
 
     report_dir = os.path.dirname(os.path.abspath(filepath))
@@ -258,14 +299,24 @@ def generate_json_report(filepath: str, tier_results: Dict[int, tuple[CustomTest
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Minecraft Desktop Opaque-Box E2E Test Runner",
+        description="Minecraft Desktop Opaque-Box E2E & Invariant Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
         "--tier",
         type=parse_tier_arg,
-        default=[1, 2, 3, 4],
-        help="Specific tier(s) to execute, e.g. --tier 1,2 or --tier 4. Default: all (1,2,3,4)."
+        default=None,
+        help="Specific tier(s) to execute, e.g. --tier 1,2 or --tier 4."
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all test suites across all tiers, milestones, and challenger stress tests."
+    )
+    parser.add_argument(
+        "--milestones",
+        action="store_true",
+        help="Run milestone invariants and challenger adversarial stress test suites."
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -288,24 +339,59 @@ def main():
 
     args = parser.parse_args()
 
-    print_banner(args.tier, args.headless)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    tier_results = {}
+    run_all = args.all
+    run_milestones = args.milestones
+    active_tiers = args.tier if args.tier is not None else ([1, 2, 3, 4] if not run_milestones else [])
+
+    mode_description = []
+    if run_all:
+        mode_description.append("All Tiers + Milestones + Challengers (Comprehensive)")
+    else:
+        if active_tiers:
+            mode_description.append(f"Tiers {active_tiers}")
+        if run_milestones:
+            mode_description.append("Milestone Invariants & Challengers")
+
+    print_banner(", ".join(mode_description) if mode_description else "Default Tiers [1, 2, 3, 4]", args.headless)
+
+    track_results = {}
     any_failures = False
 
-    for t in args.tier:
-        print(f"{BOLD}>>> Running {TIER_CONFIG[t]['name']}...{RESET}")
-        res, duration = run_tier(t, verbose=args.verbose)
-        tier_results[t] = (res, duration)
-        if len(res.failures) > 0 or len(res.errors) > 0:
-            any_failures = True
-            for test, err in res.failures + res.errors:
-                print(f"{RED}[FAIL]{RESET} {test.id()}:\n{err}")
+    # Execute Tiers
+    if run_all or active_tiers:
+        tiers_to_run = [1, 2, 3, 4] if run_all else active_tiers
+        for t in tiers_to_run:
+            cfg = TIER_CONFIG[t]
+            print(f"{BOLD}>>> Running {cfg['name']}...{RESET}")
+            res, duration = run_tier(t, verbose=args.verbose)
+            track_key = f"Tier {t}: {cfg['name'].split(':')[1].strip()}"
+            track_results[track_key] = (res, duration)
+            if len(res.failures) > 0 or len(res.errors) > 0:
+                any_failures = True
+                for test, err in res.failures + res.errors:
+                    print(f"{RED}[FAIL]{RESET} {test.id()}:\n{err}")
 
-    print_summary_table(tier_results)
+    # Execute Milestones & Challengers
+    if run_all or run_milestones:
+        for title, rel_path in MILESTONE_MODULES:
+            abs_path = os.path.join(project_root, rel_path)
+            if not os.path.isfile(abs_path):
+                continue
+            print(f"{BOLD}>>> Running {title} ({rel_path})...{RESET}")
+            res, duration = run_single_file(abs_path, verbose=args.verbose)
+            track_key = f"M-Suite: {title}"
+            track_results[track_key] = (res, duration)
+            if len(res.failures) > 0 or len(res.errors) > 0:
+                any_failures = True
+                for test, err in res.failures + res.errors:
+                    print(f"{RED}[FAIL]{RESET} {test.id()}:\n{err}")
+
+    print_summary_table(track_results)
 
     if args.json_report:
-        generate_json_report(args.json_report, tier_results)
+        generate_json_report(args.json_report, track_results)
 
     if any_failures:
         sys.exit(1)
