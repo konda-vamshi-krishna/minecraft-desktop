@@ -225,8 +225,7 @@ static bool Platform_ResolveBasePath(char* outPath, size_t maxLen) {
         *lastSlash = '\0';
     }
     chdir(procPath);
-    strncpy(outPath, procPath, maxLen - 1);
-    outPath[maxLen - 1] = '\0';
+    snprintf(outPath, maxLen, "%s", procPath);
     return true;
 #elif defined(__APPLE__)
     char applePath[PLATFORM_PATH_MAX];
@@ -236,8 +235,7 @@ static bool Platform_ResolveBasePath(char* outPath, size_t maxLen) {
     }
     char resolvedPath[PLATFORM_PATH_MAX];
     if (realpath(applePath, resolvedPath) == NULL) {
-        strncpy(resolvedPath, applePath, sizeof(resolvedPath) - 1);
-        resolvedPath[sizeof(resolvedPath) - 1] = '\0';
+        snprintf(resolvedPath, sizeof(resolvedPath), "%s", applePath);
     }
     char* lastSlash = strrchr(resolvedPath, '/');
     if (lastSlash == resolvedPath) {
@@ -246,12 +244,10 @@ static bool Platform_ResolveBasePath(char* outPath, size_t maxLen) {
         *lastSlash = '\0';
     }
     chdir(resolvedPath);
-    strncpy(outPath, resolvedPath, maxLen - 1);
-    outPath[maxLen - 1] = '\0';
+    snprintf(outPath, maxLen, "%s", resolvedPath);
     return true;
 #else
-    strncpy(outPath, ".", maxLen - 1);
-    outPath[maxLen - 1] = '\0';
+    snprintf(outPath, maxLen, ".");
     return true;
 #endif
 }
@@ -297,7 +293,7 @@ bool Platform_Init(const PlatformConfig* config) {
 
     // 1. Resolve executable base path and set CWD
     if (!Platform_ResolveBasePath(s_Platform.paths.basePath, sizeof(s_Platform.paths.basePath))) {
-        strncpy(s_Platform.paths.basePath, ".", sizeof(s_Platform.paths.basePath) - 1);
+        snprintf(s_Platform.paths.basePath, sizeof(s_Platform.paths.basePath), ".");
     }
 
     // 2. Resolve save directory with canary write probe
@@ -317,14 +313,14 @@ bool Platform_Init(const PlatformConfig* config) {
 
     Platform_CreateDir(candidateSaveDir);
     if (Platform_TestDirWritable(candidateSaveDir)) {
-        strncpy(s_Platform.paths.saveDir, candidateSaveDir, sizeof(s_Platform.paths.saveDir) - 1);
+        snprintf(s_Platform.paths.saveDir, sizeof(s_Platform.paths.saveDir), "%s", candidateSaveDir);
         s_Platform.paths.isReadOnlyFallback = false;
     } else {
         // Fallback to OS temporary directory
         char tempSaveDir[PLATFORM_PATH_MAX];
         Platform_ResolveTempSaveDir(tempSaveDir, sizeof(tempSaveDir));
         Platform_CreateDir(tempSaveDir);
-        strncpy(s_Platform.paths.saveDir, tempSaveDir, sizeof(s_Platform.paths.saveDir) - 1);
+        snprintf(s_Platform.paths.saveDir, sizeof(s_Platform.paths.saveDir), "%s", tempSaveDir);
         s_Platform.paths.isReadOnlyFallback = true;
     }
 
@@ -514,6 +510,7 @@ bool Platform_IsReadOnlyStorage(void) {
 /* ========================================================================= */
 
 bool Platform_IsKeyDown(int keyCode) {
+    (void)keyCode;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsKeyDown(keyCode);
@@ -523,6 +520,7 @@ bool Platform_IsKeyDown(int keyCode) {
 }
 
 bool Platform_IsKeyPressed(int keyCode) {
+    (void)keyCode;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsKeyPressed(keyCode);
@@ -532,6 +530,7 @@ bool Platform_IsKeyPressed(int keyCode) {
 }
 
 bool Platform_IsKeyReleased(int keyCode) {
+    (void)keyCode;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsKeyReleased(keyCode);
@@ -541,6 +540,7 @@ bool Platform_IsKeyReleased(int keyCode) {
 }
 
 bool Platform_IsMouseButtonDown(int button) {
+    (void)button;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsMouseButtonDown(button);
@@ -550,6 +550,7 @@ bool Platform_IsMouseButtonDown(int button) {
 }
 
 bool Platform_IsMouseButtonPressed(int button) {
+    (void)button;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsMouseButtonPressed(button);
@@ -559,6 +560,7 @@ bool Platform_IsMouseButtonPressed(int button) {
 }
 
 bool Platform_IsMouseButtonReleased(int button) {
+    (void)button;
     if (s_Platform.config.headless) return false;
 #if USE_RAYLIB
     return IsMouseButtonReleased(button);

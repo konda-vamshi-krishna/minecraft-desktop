@@ -39,6 +39,7 @@
     #define USE_RAYLIB 0
 #endif
 
+#if USE_RAYLIB
 static const char* App_GetItemShortName(uint8_t itemId) {
     switch (itemId) {
         case ITEM_STONE:          return "Stone";
@@ -67,6 +68,7 @@ static const char* App_GetItemShortName(uint8_t itemId) {
         default:                  return "";
     }
 }
+#endif
 
 // ponytail: [entry: CLI arg parsing with strcmp] -> [getopt_long or dedicated CLI parser if complex flags added]
 // ponytail: [chunk meshing: single-thread budget capped] -> [thread pool worker queue if chunk loading lags at render distance >= 16]
@@ -384,7 +386,7 @@ static void App_OnInit(const PlatformConfig* platConfig, const RuntimeConfig* ru
     // 3. Real-Time Procedural Audio Synthesizer Initialization
     Audio_Init(SAMPLE_RATE);
     s_Game.audioInitialized = true;
-    Audio_PlaySound(SOUND_CLICK, 0.4f);
+    Audio_PlaySound(SFX_CLICK, 0.4f);
 
     // 4. World Generation & Sub-Chunk Grid Initialization
     World_Init(seed);
@@ -502,7 +504,7 @@ static void App_OnPollEvents(void) {
     for (int k = 0; k < 9; ++k) {
         if (Platform_IsKeyPressed(PLATFORM_KEY_1 + k)) {
             Inventory_SelectHotbarKey(&s_Game.inventory, k + 1);
-            Audio_PlaySound(SOUND_CLICK, 0.4f);
+            Audio_PlaySound(SFX_CLICK, 0.4f);
             break;
         }
     }
@@ -511,7 +513,7 @@ static void App_OnPollEvents(void) {
     float wheel = Platform_GetMouseWheelMove();
     if (fabsf(wheel) > 0.1f) {
         Inventory_ScrollHotbar(&s_Game.inventory, (int)wheel);
-        Audio_PlaySound(SOUND_CLICK, 0.3f);
+        Audio_PlaySound(SFX_CLICK, 0.3f);
     }
 }
 
@@ -549,12 +551,12 @@ static void App_OnPhysicsTick(double dt) {
 
     // Audio: Jump trigger
     if (jumpAttempted && wasGrounded && !s_Game.player.isGrounded) {
-        Audio_PlaySound(SOUND_JUMP, 0.6f);
+        Audio_PlaySound(SFX_JUMP, 0.6f);
     }
 
     // Audio: Landing thump
     if (!s_Game.wasGroundedPrevTick && s_Game.player.isGrounded) {
-        Audio_PlaySound(SOUND_STEP, 0.5f);
+        Audio_PlaySound(SFX_STEP, 0.5f);
     }
 
     // Audio: Footstep synthesis on ground movement
@@ -564,7 +566,7 @@ static void App_OnPhysicsTick(double dt) {
             float stepInterval = s_Game.player.isSprinting ? 0.28f : 0.38f;
             s_Game.footstepTimer += (float)dt;
             if (s_Game.footstepTimer >= stepInterval) {
-                Audio_PlaySound(SOUND_STEP, 0.45f);
+                Audio_PlaySound(SFX_STEP, 0.45f);
                 s_Game.footstepTimer = 0.0f;
             }
         } else {
@@ -605,8 +607,7 @@ static void App_OnPhysicsTick(double dt) {
     );
 
     if (shattered) {
-        World_SetBlock(s_Game.currentHit.targetX, s_Game.currentHit.targetY, s_Game.currentHit.targetZ, (uint8_t)BLOCK_AIR);
-        Audio_PlaySound(SOUND_BREAK, 0.8f);
+        Audio_PlaySound(SFX_BLOCK_BREAK, 0.8f);
 
         if (drop.active) {
             ItemStack dropStack = {
@@ -628,7 +629,7 @@ static void App_OnPhysicsTick(double dt) {
             &s_Game.inventory
         );
         if (placed) {
-            Audio_PlaySound(SOUND_PLACE, 0.7f);
+            Audio_PlaySound(SFX_BLOCK_PLACE, 0.7f);
         }
     }
 }

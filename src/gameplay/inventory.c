@@ -338,3 +338,167 @@ void Inventory_ShiftClickSlot(PlayerInventory* inv, int slotIndex) {
 
     slot->count = (uint8_t)rem;
 }
+
+/* ============================================================================
+ * Crafting Engine API Implementation
+ * ============================================================================ */
+
+ItemStack Crafting_Match(const ItemStack grid[3][3], int gridSize) {
+    ItemStack result;
+    ItemStack_Clear(&result);
+
+    if (!grid || gridSize < 2 || gridSize > 3) {
+        return result;
+    }
+
+    int minR = gridSize, maxR = -1;
+    int minC = gridSize, maxC = -1;
+    uint8_t nonNullItems[9];
+    int nonNullCount = 0;
+
+    for (int r = 0; r < gridSize; r++) {
+        for (int c = 0; c < gridSize; c++) {
+            if (!ItemStack_IsEmpty(&grid[r][c])) {
+                if (r < minR) minR = r;
+                if (r > maxR) maxR = r;
+                if (c < minC) minC = c;
+                if (c > maxC) maxC = c;
+                nonNullItems[nonNullCount++] = grid[r][c].itemId;
+            }
+        }
+    }
+
+    if (nonNullCount == 0) {
+        return result;
+    }
+
+    /* 1. Shapeless recipe: 1 Wood Log -> 4 Wood Planks */
+    if (nonNullCount == 1 && nonNullItems[0] == ITEM_WOOD_LOG) {
+        result.itemId = ITEM_WOOD_PLANKS;
+        result.count = 4;
+        result.maxStack = DEFAULT_MAX_STACK_BLOCK;
+        result.durability = 0;
+        return result;
+    }
+
+    /* 2. Shapeless recipe: 1 Coal + 1 Stick -> 4 Torches */
+    if (nonNullCount == 2) {
+        if ((nonNullItems[0] == ITEM_COAL && nonNullItems[1] == ITEM_STICK) ||
+            (nonNullItems[0] == ITEM_STICK && nonNullItems[1] == ITEM_COAL)) {
+            result.itemId = ITEM_TORCH;
+            result.count = 4;
+            result.maxStack = DEFAULT_MAX_STACK_BLOCK;
+            result.durability = 0;
+            return result;
+        }
+    }
+
+    int subH = maxR - minR + 1;
+    int subW = maxC - minC + 1;
+
+    /* 3. Shaped recipe: 2 Wood Planks vertically (1x2) -> 4 Sticks */
+    if (subH == 2 && subW == 1) {
+        if (grid[minR][minC].itemId == ITEM_WOOD_PLANKS &&
+            grid[minR + 1][minC].itemId == ITEM_WOOD_PLANKS &&
+            nonNullCount == 2) {
+            result.itemId = ITEM_STICK;
+            result.count = 4;
+            result.maxStack = DEFAULT_MAX_STACK_BLOCK;
+            result.durability = 0;
+            return result;
+        }
+    }
+
+    /* 4. Shaped recipe: 4 Wood Planks (2x2) -> 1 Crafting Table */
+    if (subH == 2 && subW == 2 && nonNullCount == 4) {
+        if (grid[minR][minC].itemId == ITEM_WOOD_PLANKS &&
+            grid[minR][minC + 1].itemId == ITEM_WOOD_PLANKS &&
+            grid[minR + 1][minC].itemId == ITEM_WOOD_PLANKS &&
+            grid[minR + 1][minC + 1].itemId == ITEM_WOOD_PLANKS) {
+            result.itemId = ITEM_CRAFTING_TABLE;
+            result.count = 1;
+            result.maxStack = DEFAULT_MAX_STACK_BLOCK;
+            result.durability = 0;
+            return result;
+        }
+    }
+
+    /* 5. Shaped recipes: 3x3 Pickaxes */
+    if (subH == 3 && subW == 3 && nonNullCount == 5) {
+        uint8_t top0 = grid[minR][minC].itemId;
+        uint8_t top1 = grid[minR][minC + 1].itemId;
+        uint8_t top2 = grid[minR][minC + 2].itemId;
+        uint8_t mid0 = grid[minR + 1][minC].itemId;
+        uint8_t mid1 = grid[minR + 1][minC + 1].itemId;
+        uint8_t mid2 = grid[minR + 1][minC + 2].itemId;
+        uint8_t bot0 = grid[minR + 2][minC].itemId;
+        uint8_t bot1 = grid[minR + 2][minC + 1].itemId;
+        uint8_t bot2 = grid[minR + 2][minC + 2].itemId;
+
+        if (mid0 == ITEM_AIR && mid2 == ITEM_AIR &&
+            bot0 == ITEM_AIR && bot2 == ITEM_AIR &&
+            mid1 == ITEM_STICK && bot1 == ITEM_STICK &&
+            top0 == top1 && top1 == top2) {
+
+            if (top0 == ITEM_WOOD_PLANKS) {
+                result.itemId = ITEM_WOODEN_PICKAXE;
+                result.count = 1;
+                result.maxStack = DEFAULT_MAX_STACK_TOOL;
+                result.durability = Item_GetDefaultDurability(ITEM_WOODEN_PICKAXE);
+                return result;
+            } else if (top0 == ITEM_COBBLESTONE) {
+                result.itemId = ITEM_STONE_PICKAXE;
+                result.count = 1;
+                result.maxStack = DEFAULT_MAX_STACK_TOOL;
+                result.durability = Item_GetDefaultDurability(ITEM_STONE_PICKAXE);
+                return result;
+            } else if (top0 == ITEM_IRON_INGOT) {
+                result.itemId = ITEM_IRON_PICKAXE;
+                result.count = 1;
+                result.maxStack = DEFAULT_MAX_STACK_TOOL;
+                result.durability = Item_GetDefaultDurability(ITEM_IRON_PICKAXE);
+                return result;
+            }
+        }
+    }
+
+    /* 6. Shaped recipe: 8 Cobblestone ring (3x3) -> 1 Furnace */
+    if (subH == 3 && subW == 3 && nonNullCount == 8) {
+        bool isFurnace = true;
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                if (r == 1 && c == 1) {
+                    if (grid[minR + r][minC + c].itemId != ITEM_AIR) isFurnace = false;
+                } else {
+                    if (grid[minR + r][minC + c].itemId != ITEM_COBBLESTONE) isFurnace = false;
+                }
+            }
+        }
+        if (isFurnace) {
+            result.itemId = ITEM_FURNACE;
+            result.count = 1;
+            result.maxStack = DEFAULT_MAX_STACK_BLOCK;
+            result.durability = 0;
+            return result;
+        }
+    }
+
+    return result;
+}
+
+ItemStack Crafting_Craft(ItemStack grid[3][3], int gridSize) {
+    ItemStack result = Crafting_Match((const ItemStack (*)[3])grid, gridSize);
+    if (!ItemStack_IsEmpty(&result)) {
+        for (int r = 0; r < gridSize; r++) {
+            for (int c = 0; c < gridSize; c++) {
+                if (!ItemStack_IsEmpty(&grid[r][c])) {
+                    grid[r][c].count--;
+                    if (grid[r][c].count == 0) {
+                        ItemStack_Clear(&grid[r][c]);
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}

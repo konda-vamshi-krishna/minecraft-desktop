@@ -147,6 +147,12 @@ int        Inventory_AddItem(PlayerInventory* inv, const ItemStack* item); // re
 void       Inventory_MouseClickSlot(PlayerInventory* inv, int slotIndex, bool isRightClick);
 void       Inventory_ShiftClickSlot(PlayerInventory* inv, int slotIndex);
 
+// =============================================================================
+// Crafting Engine API (2x2 & 3x3 Grid Matcher)
+// =============================================================================
+ItemStack  Crafting_Match(const ItemStack grid[3][3], int gridSize);
+ItemStack  Crafting_Craft(ItemStack grid[3][3], int gridSize);
+
 #ifdef __cplusplus
 }
 #endif
