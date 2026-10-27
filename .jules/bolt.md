@@ -1,0 +1,3 @@
+## 2024-05-24 - Voxel AO Corner Short-Circuiting
+**Learning:** In Minecraft-style greedy meshing, computing per-vertex Ambient Occlusion (AO) requires sampling 3 neighbor blocks: 2 adjacent sides and 1 diagonal corner. However, if both adjacent sides are solid/opaque, light cannot physically penetrate to the corner anyway (the corner rule). Therefore, the diagonal corner sample is completely irrelevant to the final AO value.
+**Action:** Always short-circuit the AO calculation by checking the 2 side blocks first. If both are opaque, return 0 (darkest) immediately without ever sampling the 3rd corner block. This avoids 33% of the voxel lookups, which are expensive because they involve chunk boundary checks and potential neighbor pointer dereferencing.

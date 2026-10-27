@@ -80,12 +80,15 @@ uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbo
 
     bool s1 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s1_x, s1_y, s1_z));
     bool s2 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s2_x, s2_y, s2_z));
-    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, c_x,  c_y,  c_z));
 
     /* Corner rule: if both side walls are solid, light cannot penetrate the corner */
+    /* ⚡ Bolt Optimization: Short-circuit corner voxel sampling to save expensive chunk boundary checks */
     if (s1 && s2) {
         return 0;
     }
+
+    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, c_x,  c_y,  c_z));
+
     return (uint8_t)(3 - ((s1 ? 1 : 0) + (s2 ? 1 : 0) + (c ? 1 : 0)));
 }
 

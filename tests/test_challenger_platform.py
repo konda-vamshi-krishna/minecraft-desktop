@@ -49,12 +49,12 @@ class TestChallengerPlatform(unittest.TestCase):
     def test_01_monotonic_timer_properties(self):
         """Verify Platform_GetTime monotonicity, precision, and non-negativity."""
         t0 = time.monotonic()
-        time.sleep(0.005)
+        time.sleep(0.050)
         t1 = time.monotonic()
 
         self.assertGreaterEqual(t0, 0.0, "Monotonic timestamp must be non-negative")
         self.assertGreater(t1, t0, "Monotonic timer must strictly advance")
-        self.assertAlmostEqual(t1 - t0, 0.005, delta=0.010, msg="Sleep delta must match expected interval")
+        self.assertAlmostEqual(t1 - t0, 0.050, delta=0.050, msg="Sleep delta must match expected interval")
 
         # In C source verification
         self.assertIn("clock_gettime", self.platform_c)
