@@ -723,6 +723,12 @@ static void App_OnRenderFrame(float alpha) {
                     DrawText(countStr, sx + slotSize - 14, sy + slotSize - 12, 10, (Color){ 255, 255, 100, 255 });
                 }
             }
+
+            // Draw keyboard shortcut hint (1-9)
+            char shortcutStr[8];
+            snprintf(shortcutStr, sizeof(shortcutStr), "%d", s + 1);
+            int shortcutWidth = MeasureText(shortcutStr, 10);
+            DrawText(shortcutStr, sx + slotSize - shortcutWidth - 3, sy + 4, 10, (Color){ 150, 150, 150, 200 });
         }
 
         // 6. F3 Telemetry Overlay (Top Left)
