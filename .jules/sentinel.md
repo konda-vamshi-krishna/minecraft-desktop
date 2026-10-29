@@ -1,0 +1,4 @@
+## 2026-10-29 - Cross-User Temporary Save Directory Hijack
+**Vulnerability:** The POSIX fallback directory path `Platform_ResolveTempSaveDir` used `/tmp/minecraft_desktop/saves` with `0755` permissions for `mkdir`, allowing any local user to pre-create `/tmp/minecraft_desktop` or read save data if the main user's fallback storage path was used.
+**Learning:** Hardcoded generic temporary paths in world-writable directories (like `/tmp`) create symlink risks or permission overlaps. Using loose `0755` permissions exacerbated the info-leak risk.
+**Prevention:** In POSIX C/C++, use `0700` for directory permissions to ensure only the owner can read/write it. Uniquely namespace global temporary folder usage with `getuid()` (e.g. `/tmp/app_%u/`) to prevent conflict and symlink exploitation by other users.

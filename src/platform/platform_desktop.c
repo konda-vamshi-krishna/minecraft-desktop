@@ -134,7 +134,7 @@ static bool Platform_CreateDir(const char* path) {
                 CreateDirectoryW(wide, NULL);
             }
 #else
-            mkdir(temp, 0755);
+            mkdir(temp, 0700);
 #endif
             *p = slash;
         }
@@ -150,7 +150,7 @@ static bool Platform_CreateDir(const char* path) {
     }
     return false;
 #else
-    if (mkdir(temp, 0755) == 0 || errno == EEXIST) {
+    if (mkdir(temp, 0700) == 0 || errno == EEXIST) {
         return true;
     }
     return false;
@@ -270,7 +270,7 @@ static bool Platform_ResolveTempSaveDir(char* outTempSaveDir, size_t maxLen) {
     if (!tmp || tmp[0] == '\0') tmp = getenv("TEMP");
     if (!tmp || tmp[0] == '\0') tmp = getenv("TMP");
     if (!tmp || tmp[0] == '\0') tmp = "/tmp";
-    snprintf(outTempSaveDir, maxLen, "%s/minecraft_desktop/saves", tmp);
+    snprintf(outTempSaveDir, maxLen, "%s/minecraft_desktop_%u/saves", tmp, (unsigned)getuid());
     return true;
 #endif
 }
