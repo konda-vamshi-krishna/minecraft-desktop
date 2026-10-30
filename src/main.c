@@ -689,6 +689,12 @@ static void App_OnRenderFrame(float alpha) {
         int sh = Platform_GetWindowHeight();
         int cx = sw / 2;
         int cy = sh / 2;
+
+        // Shadow for crosshair contrast
+        DrawRectangle(cx - 7, cy, 16, 2, (Color){ 0, 0, 0, 120 });
+        DrawRectangle(cx, cy - 7, 2, 16, (Color){ 0, 0, 0, 120 });
+
+        // Main crosshair
         DrawRectangle(cx - 8, cy - 1, 16, 2, (Color){ 255, 255, 255, 220 });
         DrawRectangle(cx - 1, cy - 8, 2, 16, (Color){ 255, 255, 255, 220 });
 
