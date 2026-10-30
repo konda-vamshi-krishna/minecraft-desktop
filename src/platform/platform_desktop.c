@@ -158,14 +158,18 @@ static bool Platform_CreateDir(const char* path) {
 }
 
 static bool Platform_TestDirWritable(const char* dirPath) {
-    char canary[PLATFORM_PATH_MAX + 32];
-    snprintf(canary, sizeof(canary), "%s%c.write_test", dirPath,
+    char canary[PLATFORM_PATH_MAX + 64];
+    // Use a high-resolution timer as pseudo-randomness for the canary filename
+    // to mitigate predictable temp file vulnerabilities.
+    double t = Platform_GetTime();
+    unsigned int r = (unsigned int)(t * 1000000.0) ^ (unsigned int)(size_t)dirPath;
+    snprintf(canary, sizeof(canary), "%s%c.write_test_%u", dirPath,
 #if defined(_WIN32)
              '\\'
 #else
              '/'
 #endif
-    );
+    , r);
 #if defined(_WIN32)
     wchar_t wideCanary[PLATFORM_PATH_MAX + 32];
     int len = MultiByteToWideChar(CP_UTF8, 0, canary, -1, wideCanary, PLATFORM_PATH_MAX + 32);
@@ -266,11 +270,22 @@ static bool Platform_ResolveTempSaveDir(char* outTempSaveDir, size_t maxLen) {
     snprintf(outTempSaveDir, maxLen, "%s\\minecraft_desktop\\saves", tempUtf8);
     return true;
 #else
+    const char* xdg_data = getenv("XDG_DATA_HOME");
+    if (xdg_data && xdg_data[0] != '\0') {
+        snprintf(outTempSaveDir, maxLen, "%s/minecraft_desktop/saves", xdg_data);
+        return true;
+    }
+    const char* home = getenv("HOME");
+    if (home && home[0] != '\0') {
+        snprintf(outTempSaveDir, maxLen, "%s/.local/share/minecraft_desktop/saves", home);
+        return true;
+    }
+
     const char* tmp = getenv("TMPDIR");
     if (!tmp || tmp[0] == '\0') tmp = getenv("TEMP");
     if (!tmp || tmp[0] == '\0') tmp = getenv("TMP");
     if (!tmp || tmp[0] == '\0') tmp = "/tmp";
-    snprintf(outTempSaveDir, maxLen, "%s/minecraft_desktop/saves", tmp);
+    snprintf(outTempSaveDir, maxLen, "%s/minecraft_desktop_%d/saves", tmp, getuid());
     return true;
 #endif
 }
