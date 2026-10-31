@@ -689,6 +689,12 @@ static void App_OnRenderFrame(float alpha) {
         int sh = Platform_GetWindowHeight();
         int cx = sw / 2;
         int cy = sh / 2;
+
+        // Shadow for crosshair
+        DrawRectangle(cx - 9, cy - 2, 18, 4, (Color){ 0, 0, 0, 150 });
+        DrawRectangle(cx - 2, cy - 9, 4, 18, (Color){ 0, 0, 0, 150 });
+
+        // Main crosshair
         DrawRectangle(cx - 8, cy - 1, 16, 2, (Color){ 255, 255, 255, 220 });
         DrawRectangle(cx - 1, cy - 8, 2, 16, (Color){ 255, 255, 255, 220 });
 
@@ -715,11 +721,13 @@ static void App_OnRenderFrame(float alpha) {
             const ItemStack* stack = &s_Game.inventory.slots[s];
             if (stack->itemId != ITEM_AIR && stack->count > 0) {
                 const char* itemName = App_GetItemShortName(stack->itemId);
+                DrawText(itemName, sx + 4, sy + 5, 10, (Color){ 0, 0, 0, 255 }); // shadow
                 DrawText(itemName, sx + 3, sy + 4, 10, (Color){ 220, 220, 220, 255 });
 
                 if (stack->count > 1) {
                     char countStr[8];
                     snprintf(countStr, sizeof(countStr), "%d", (int)stack->count);
+                    DrawText(countStr, sx + slotSize - 13, sy + slotSize - 11, 10, (Color){ 0, 0, 0, 255 }); // shadow
                     DrawText(countStr, sx + slotSize - 14, sy + slotSize - 12, 10, (Color){ 255, 255, 100, 255 });
                 }
             }
@@ -729,6 +737,7 @@ static void App_OnRenderFrame(float alpha) {
         char hudBuf[128];
         snprintf(hudBuf, sizeof(hudBuf), "FPS: %d | Pos: %.2f / %.2f / %.2f",
                  GetFPS(), s_Game.player.x, s_Game.player.y, s_Game.player.z);
+        DrawText(hudBuf, 13, 11, 16, (Color){ 0, 0, 0, 240 }); // shadow
         DrawText(hudBuf, 12, 10, 16, (Color){ 255, 255, 255, 240 });
 
         int pcx = WorldToChunkCoord(FloorToInt(s_Game.player.x));
@@ -739,8 +748,11 @@ static void App_OnRenderFrame(float alpha) {
         else if (s_Game.camera.forward.z > 0.707f) dirStr = "South (+Z)";
 
         snprintf(hudBuf, sizeof(hudBuf), "Chunk: [%d, %d] | Facing: %s", pcx, pcz, dirStr);
+        DrawText(hudBuf, 13, 31, 14, (Color){ 0, 0, 0, 220 }); // shadow
         DrawText(hudBuf, 12, 30, 14, (Color){ 220, 220, 220, 220 });
 
+        DrawText("Controls: WASD=Move | Space=Jump | L-Click=Break | R-Click=Place | 1-9=Hotbar | ESC=Mouse",
+                 13, 51, 12, (Color){ 0, 0, 0, 200 }); // shadow
         DrawText("Controls: WASD=Move | Space=Jump | L-Click=Break | R-Click=Place | 1-9=Hotbar | ESC=Mouse",
                  12, 50, 12, (Color){ 190, 190, 190, 200 });
 
