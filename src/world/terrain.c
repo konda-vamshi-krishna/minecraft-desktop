@@ -349,8 +349,15 @@ void Terrain_GenerateChunk(int chunkX, int chunkZ, uint64_t worldSeed, uint8_t* 
                 }
 
                 /* 3D Volumetric Density: rho = H_2D - y + Simplex3D * A */
-                float densNoise = Terrain_Simplex3D((float)wx * 0.02f, (float)ly * 0.02f, (float)wz * 0.02f, s_permDensity);
-                float rho = baseH - (float)ly + densNoise * amp3D;
+                float dy = baseH - (float)ly;
+                float rho;
+                if (dy > amp3D) {
+                    rho = dy - amp3D; /* guaranteed > 0 */
+                } else if (dy < -amp3D) {
+                    rho = dy + amp3D; /* guaranteed <= 0 */
+                } else {
+                    rho = dy + Terrain_Simplex3D((float)wx * 0.02f, (float)ly * 0.02f, (float)wz * 0.02f, s_permDensity) * amp3D;
+                }
 
                 if (rho > 0.0f) {
                     /* Solid rock -> evaluate dual 3D Simplex caves for y in [5, 128] */
