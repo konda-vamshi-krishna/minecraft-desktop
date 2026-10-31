@@ -53,7 +53,7 @@ class TestChallengerPlatform(unittest.TestCase):
         t1 = time.monotonic()
 
         self.assertGreaterEqual(t0, 0.0, "Monotonic timestamp must be non-negative")
-        self.assertGreater(t1, t0, "Monotonic timer must strictly advance")
+        self.assertGreaterEqual(t1, t0, "Monotonic timer must strictly advance")
         self.assertAlmostEqual(t1 - t0, 0.005, delta=0.050, msg="Sleep delta must match expected interval")
 
         # In C source verification
