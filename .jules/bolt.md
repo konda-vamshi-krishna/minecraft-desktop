@@ -1,0 +1,3 @@
+## 2024-05-24 - Inline and Unroll Voxel Sampling
+**Learning:** Voxel sampling with strict bounds checking inside the tri-nested meshing loop accounts for significant overhead. When operating strictly on chunks, directly computing array offsets instead of calling multi-branch coordinate validators avoids function overhead and branch mispredictions.
+**Action:** Identify multi-nested loops operating on tightly constrained arrays (like 16x256x16 chunks) and unroll pure-inside-bounds paths where index arithmetic guarantees safety. Make helpers `static inline` where safe to remove function prologue/epilogue.
