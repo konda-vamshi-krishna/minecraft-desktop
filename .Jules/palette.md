@@ -1,0 +1,3 @@
+## 2026-11-01 - [Crosshair Visibility in Procedural Environments]
+**Learning:** Pure white crosshairs become invisible against bright procedural skyboxes or snow blocks, leading to poor interaction targeting and user frustration.
+**Action:** Always implement a dark contrasting outline (e.g., 1px black stroke or shadow with ~70% opacity) behind center-screen reticles to ensure visibility against all possible procedurally generated backgrounds.
