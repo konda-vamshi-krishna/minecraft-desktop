@@ -10,35 +10,46 @@
 static PackedVertex s_ScratchVertices[MESHER_MAX_VERTICES];
 static uint32_t     s_ScratchIndices[MESHER_MAX_INDICES];
 
-bool Mesher_IsOpaque(uint8_t blockId) {
+static inline bool Mesher_IsOpaque_Inline(uint8_t blockId) {
     return (blockId != BLOCK_AIR) && (blockId != BLOCK_WATER);
 }
 
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+bool Mesher_IsOpaque(uint8_t blockId) {
+    return Mesher_IsOpaque_Inline(blockId);
+}
+
+static inline uint8_t Mesher_SampleVoxel_Inline(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+    if ((unsigned)x < (unsigned)CHUNK_WIDTH && (unsigned)y < (unsigned)CHUNK_HEIGHT && (unsigned)z < (unsigned)CHUNK_DEPTH) {
+        return chunk->voxels[y + (x << 8) + (z << 12)]; // ChunkVoxelIndex unrolled
+    }
     if (y < 0 || y >= CHUNK_HEIGHT) {
         return BLOCK_AIR;
     }
     if (x < 0) {
         if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negX) ? neighbors->negX->voxels[ChunkVoxelIndex(x + CHUNK_WIDTH, y, z)] : BLOCK_AIR;
+        return (neighbors && neighbors->negX) ? neighbors->negX->voxels[y + ((x + CHUNK_WIDTH) << 8) + (z << 12)] : BLOCK_AIR;
     }
     if (x >= CHUNK_WIDTH) {
         if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posX) ? neighbors->posX->voxels[ChunkVoxelIndex(x - CHUNK_WIDTH, y, z)] : BLOCK_AIR;
+        return (neighbors && neighbors->posX) ? neighbors->posX->voxels[y + ((x - CHUNK_WIDTH) << 8) + (z << 12)] : BLOCK_AIR;
     }
     if (z < 0) {
         if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[ChunkVoxelIndex(x, y, z + CHUNK_DEPTH)] : BLOCK_AIR;
+        return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[y + (x << 8) + ((z + CHUNK_DEPTH) << 12)] : BLOCK_AIR;
     }
     if (z >= CHUNK_DEPTH) {
         if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[ChunkVoxelIndex(x, y, z - CHUNK_DEPTH)] : BLOCK_AIR;
+        return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[y + (x << 8) + ((z - CHUNK_DEPTH) << 12)] : BLOCK_AIR;
     }
     if (!chunk) return BLOCK_AIR;
-    return chunk->voxels[ChunkVoxelIndex(x, y, z)];
+    return chunk->voxels[y + (x << 8) + (z << 12)];
 }
 
-uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
+uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+    return Mesher_SampleVoxel_Inline(chunk, neighbors, x, y, z);
+}
+
+static inline uint8_t Mesher_ComputeVertexAO_Inline(const Chunk* chunk, const NeighborChunks* neighbors,
                                int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao) {
     static const int s_Normals[6][3] = {
         {-1,  0,  0}, /* FACE_NEG_X */
@@ -49,13 +60,13 @@ uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbo
         { 0,  0,  1}  /* FACE_POS_Z */
     };
 
-    int d = normalIdx / 2;
-    int u = (d + 1) % 3;
-    int v = (d + 2) % 3;
-
     int nx = s_Normals[normalIdx][0];
     int ny = s_Normals[normalIdx][1];
     int nz = s_Normals[normalIdx][2];
+
+    int d = normalIdx >> 1; // normalIdx / 2
+    int u = (d == 0) ? 1 : (d == 1) ? 2 : 0; // (d + 1) % 3
+    int v = (d == 0) ? 2 : (d == 1) ? 0 : 1; // (d + 2) % 3
 
     int du_x = (u == 0) ? du_ao : 0;
     int du_y = (u == 1) ? du_ao : 0;
@@ -74,19 +85,24 @@ uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbo
     int s2_y = by + ny + dv_y;
     int s2_z = bz + nz + dv_z;
 
-    int c_x = bx + nx + du_x + dv_x;
-    int c_y = by + ny + du_y + dv_y;
-    int c_z = bz + nz + du_z + dv_z;
+    int c_x = s1_x + dv_x;
+    int c_y = s1_y + dv_y;
+    int c_z = s1_z + dv_z;
 
-    bool s1 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s1_x, s1_y, s1_z));
-    bool s2 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s2_x, s2_y, s2_z));
-    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, c_x,  c_y,  c_z));
+    bool s1 = Mesher_IsOpaque_Inline(Mesher_SampleVoxel_Inline(chunk, neighbors, s1_x, s1_y, s1_z));
+    bool s2 = Mesher_IsOpaque_Inline(Mesher_SampleVoxel_Inline(chunk, neighbors, s2_x, s2_y, s2_z));
+    bool c  = Mesher_IsOpaque_Inline(Mesher_SampleVoxel_Inline(chunk, neighbors, c_x,  c_y,  c_z));
 
     /* Corner rule: if both side walls are solid, light cannot penetrate the corner */
     if (s1 && s2) {
         return 0;
     }
     return (uint8_t)(3 - ((s1 ? 1 : 0) + (s2 ? 1 : 0) + (c ? 1 : 0)));
+}
+
+uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
+                               int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao) {
+    return Mesher_ComputeVertexAO_Inline(chunk, neighbors, bx, by, bz, normalIdx, du_ao, dv_ao);
 }
 
 void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, ChunkMesh* outMesh) {
@@ -103,8 +119,8 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
 
     /* 3-axis Lysenko sweep: d = 0 (X), d = 1 (Y), d = 2 (Z) */
     for (int d = 0; d < 3; d++) {
-        int u = (d + 1) % 3;
-        int v = (d + 2) % 3;
+        int u = (d == 0) ? 1 : (d == 1) ? 2 : 0;
+        int v = (d == 0) ? 2 : (d == 1) ? 0 : 1;
 
         int uLimit = dims[u];
         int vLimit = dims[v];
@@ -119,28 +135,106 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
 
         for (x[d] = -1; x[d] < dLimit; ) {
             int n = 0;
+            bool has_mask = false;
 
             /* 1. Build signed comparison mask using direct neighbor sampling */
-            for (x[v] = 0; x[v] < vLimit; x[v]++) {
-                for (x[u] = 0; x[u] < uLimit; x[u]++) {
-                    uint8_t b1 = Mesher_SampleVoxel(chunk, neighbors, x[0], x[1], x[2]);
-                    uint8_t b2 = Mesher_SampleVoxel(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+            // Generate mask using pointer arithmetic where possible
+            if (d == 1 && x[1] >= 0 && x[1] + 1 < CHUNK_HEIGHT) { // Y axis, fully inside chunk
+                const uint8_t* p1 = chunk->voxels + x[1];
+                const uint8_t* p2 = chunk->voxels + x[1] + 1;
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        int offset = (x[0] << 8) + (x[2] << 12);
+                        uint8_t b1 = p1[offset];
+                        uint8_t b2 = p2[offset];
 
-                    bool op1 = Mesher_IsOpaque(b1);
-                    bool op2 = Mesher_IsOpaque(b2);
+                        bool op1 = Mesher_IsOpaque_Inline(b1);
+                        bool op2 = Mesher_IsOpaque_Inline(b2);
 
-                    if (op1 == op2) {
-                        mask[n++] = 0;
-                    } else if (op1) {
-                        mask[n++] = (int16_t)b1;  /* Normal pointing +d */
-                    } else {
-                        mask[n++] = -(int16_t)b2; /* Normal pointing -d */
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;
+                            has_mask = true;
+                        } else {
+                            mask[n++] = -(int16_t)b2;
+                            has_mask = true;
+                        }
+                    }
+                }
+            } else if (d == 0 && x[0] >= 0 && x[0] + 1 < CHUNK_WIDTH) { // X axis, fully inside chunk
+                const uint8_t* p1 = chunk->voxels + (x[0] << 8);
+                const uint8_t* p2 = chunk->voxels + ((x[0] + 1) << 8);
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    int z_offset = (x[2] << 12);
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        int offset = x[1] + z_offset;
+                        uint8_t b1 = p1[offset];
+                        uint8_t b2 = p2[offset];
+
+                        bool op1 = Mesher_IsOpaque_Inline(b1);
+                        bool op2 = Mesher_IsOpaque_Inline(b2);
+
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;
+                            has_mask = true;
+                        } else {
+                            mask[n++] = -(int16_t)b2;
+                            has_mask = true;
+                        }
+                    }
+                }
+            } else if (d == 2 && x[2] >= 0 && x[2] + 1 < CHUNK_DEPTH) { // Z axis, fully inside chunk
+                const uint8_t* p1 = chunk->voxels + (x[2] << 12);
+                const uint8_t* p2 = chunk->voxels + ((x[2] + 1) << 12);
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        int offset = x[1] + (x[0] << 8); // u is x[0], v is x[1]
+                        uint8_t b1 = p1[offset];
+                        uint8_t b2 = p2[offset];
+
+                        bool op1 = Mesher_IsOpaque_Inline(b1);
+                        bool op2 = Mesher_IsOpaque_Inline(b2);
+
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;
+                            has_mask = true;
+                        } else {
+                            mask[n++] = -(int16_t)b2;
+                            has_mask = true;
+                        }
+                    }
+                }
+            } else {
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        uint8_t b1 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0], x[1], x[2]);
+                        uint8_t b2 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+
+                        bool op1 = Mesher_IsOpaque_Inline(b1);
+                        bool op2 = Mesher_IsOpaque_Inline(b2);
+
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;
+                            has_mask = true;
+                        } else {
+                            mask[n++] = -(int16_t)b2;
+                            has_mask = true;
+                        }
                     }
                 }
             }
 
             x[d]++;
             n = 0;
+
+            if (!has_mask) continue;
 
             /* 2. Scanline merge contiguous coplanar faces */
             for (int j = 0; j < vLimit; j++) {
@@ -183,7 +277,7 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
                         dv[v] = h;
 
                         uint8_t blockId   = (uint8_t)(m > 0 ? m : -m);
-                        uint8_t normalIdx = (uint8_t)(2 * d + (m > 0 ? 1 : 0));
+                        uint8_t normalIdx = (uint8_t)((d << 1) + (m > 0 ? 1 : 0));
                         uint32_t baseIdx  = outMesh->vertexCount;
 
                         /* Quad origin coordinates and AO evaluations */
@@ -200,19 +294,19 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
                                Corner 1: (i + w, j)
                                Corner 2: (i + w, j + h)
                                Corner 3: (i, j + h) */
-                            ao0 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao0 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? i : (v==0 ? j : bx)),
                                 (u==1 ? i : (v==1 ? j : by)),
                                 (u==2 ? i : (v==2 ? j : bz)), normalIdx, -1, -1);
-                            ao1 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao1 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? (i+w-1) : (v==0 ? j : bx)),
                                 (u==1 ? (i+w-1) : (v==1 ? j : by)),
                                 (u==2 ? (i+w-1) : (v==2 ? j : bz)), normalIdx, +1, -1);
-                            ao2 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao2 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? (i+w-1) : (v==0 ? (j+h-1) : bx)),
                                 (u==1 ? (i+w-1) : (v==1 ? (j+h-1) : by)),
                                 (u==2 ? (i+w-1) : (v==2 ? (j+h-1) : bz)), normalIdx, +1, +1);
-                            ao3 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao3 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? i : (v==0 ? (j+h-1) : bx)),
                                 (u==1 ? i : (v==1 ? (j+h-1) : by)),
                                 (u==2 ? i : (v==2 ? (j+h-1) : bz)), normalIdx, -1, +1);
@@ -237,19 +331,19 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
                                Corner 1: (i, j + h)
                                Corner 2: (i + w, j + h)
                                Corner 3: (i + w, j) */
-                            ao0 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao0 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? i : (v==0 ? j : bx)),
                                 (u==1 ? i : (v==1 ? j : by)),
                                 (u==2 ? i : (v==2 ? j : bz)), normalIdx, -1, -1);
-                            ao1 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao1 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? i : (v==0 ? (j+h-1) : bx)),
                                 (u==1 ? i : (v==1 ? (j+h-1) : by)),
                                 (u==2 ? i : (v==2 ? (j+h-1) : bz)), normalIdx, -1, +1);
-                            ao2 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao2 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? (i+w-1) : (v==0 ? (j+h-1) : bx)),
                                 (u==1 ? (i+w-1) : (v==1 ? (j+h-1) : by)),
                                 (u==2 ? (i+w-1) : (v==2 ? (j+h-1) : bz)), normalIdx, +1, +1);
-                            ao3 = Mesher_ComputeVertexAO(chunk, neighbors,
+                            ao3 = Mesher_ComputeVertexAO_Inline(chunk, neighbors,
                                 (u==0 ? (i+w-1) : (v==0 ? j : bx)),
                                 (u==1 ? (i+w-1) : (v==1 ? j : by)),
                                 (u==2 ? (i+w-1) : (v==2 ? j : bz)), normalIdx, +1, -1);
@@ -288,9 +382,7 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
 
                         /* 5. Clear merged region in mask */
                         for (int l = 0; l < h; l++) {
-                            for (int k = 0; k < w; k++) {
-                                mask[(i + k) + (j + l) * uLimit] = 0;
-                            }
+                            memset(&mask[(i) + (j + l) * uLimit], 0, w * sizeof(int16_t));
                         }
 
                         i += w;
