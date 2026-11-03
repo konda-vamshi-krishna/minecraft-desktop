@@ -10,84 +10,11 @@
 static PackedVertex s_ScratchVertices[MESHER_MAX_VERTICES];
 static uint32_t     s_ScratchIndices[MESHER_MAX_INDICES];
 
-bool Mesher_IsOpaque(uint8_t blockId) {
-    return (blockId != BLOCK_AIR) && (blockId != BLOCK_WATER);
-}
 
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
-    if (y < 0 || y >= CHUNK_HEIGHT) {
-        return BLOCK_AIR;
-    }
-    if (x < 0) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negX) ? neighbors->negX->voxels[ChunkVoxelIndex(x + CHUNK_WIDTH, y, z)] : BLOCK_AIR;
-    }
-    if (x >= CHUNK_WIDTH) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posX) ? neighbors->posX->voxels[ChunkVoxelIndex(x - CHUNK_WIDTH, y, z)] : BLOCK_AIR;
-    }
-    if (z < 0) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[ChunkVoxelIndex(x, y, z + CHUNK_DEPTH)] : BLOCK_AIR;
-    }
-    if (z >= CHUNK_DEPTH) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[ChunkVoxelIndex(x, y, z - CHUNK_DEPTH)] : BLOCK_AIR;
-    }
-    if (!chunk) return BLOCK_AIR;
-    return chunk->voxels[ChunkVoxelIndex(x, y, z)];
-}
 
-uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
-                               int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao) {
-    static const int s_Normals[6][3] = {
-        {-1,  0,  0}, /* FACE_NEG_X */
-        { 1,  0,  0}, /* FACE_POS_X */
-        { 0, -1,  0}, /* FACE_NEG_Y */
-        { 0,  1,  0}, /* FACE_POS_Y */
-        { 0,  0, -1}, /* FACE_NEG_Z */
-        { 0,  0,  1}  /* FACE_POS_Z */
-    };
 
-    int d = normalIdx / 2;
-    int u = (d + 1) % 3;
-    int v = (d + 2) % 3;
 
-    int nx = s_Normals[normalIdx][0];
-    int ny = s_Normals[normalIdx][1];
-    int nz = s_Normals[normalIdx][2];
 
-    int du_x = (u == 0) ? du_ao : 0;
-    int du_y = (u == 1) ? du_ao : 0;
-    int du_z = (u == 2) ? du_ao : 0;
-
-    int dv_x = (v == 0) ? dv_ao : 0;
-    int dv_y = (v == 1) ? dv_ao : 0;
-    int dv_z = (v == 2) ? dv_ao : 0;
-
-    /* Sample 2 orthogonal side blocks and 1 diagonal corner block in the air layer */
-    int s1_x = bx + nx + du_x;
-    int s1_y = by + ny + du_y;
-    int s1_z = bz + nz + du_z;
-
-    int s2_x = bx + nx + dv_x;
-    int s2_y = by + ny + dv_y;
-    int s2_z = bz + nz + dv_z;
-
-    int c_x = bx + nx + du_x + dv_x;
-    int c_y = by + ny + du_y + dv_y;
-    int c_z = bz + nz + du_z + dv_z;
-
-    bool s1 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s1_x, s1_y, s1_z));
-    bool s2 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s2_x, s2_y, s2_z));
-    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, c_x,  c_y,  c_z));
-
-    /* Corner rule: if both side walls are solid, light cannot penetrate the corner */
-    if (s1 && s2) {
-        return 0;
-    }
-    return (uint8_t)(3 - ((s1 ? 1 : 0) + (s2 ? 1 : 0) + (c ? 1 : 0)));
-}
 
 void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, ChunkMesh* outMesh) {
     if (!chunk || !outMesh) return;
@@ -125,16 +52,12 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
                 for (x[u] = 0; x[u] < uLimit; x[u]++) {
                     uint8_t b1 = Mesher_SampleVoxel(chunk, neighbors, x[0], x[1], x[2]);
                     uint8_t b2 = Mesher_SampleVoxel(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
-
-                    bool op1 = Mesher_IsOpaque(b1);
-                    bool op2 = Mesher_IsOpaque(b2);
-
-                    if (op1 == op2) {
+                    if (Mesher_IsOpaque(b1) == Mesher_IsOpaque(b2)) {
                         mask[n++] = 0;
-                    } else if (op1) {
-                        mask[n++] = (int16_t)b1;  /* Normal pointing +d */
+                    } else if (Mesher_IsOpaque(b1)) {
+                        mask[n++] = (int16_t)b1;
                     } else {
-                        mask[n++] = -(int16_t)b2; /* Normal pointing -d */
+                        mask[n++] = -(int16_t)b2;
                     }
                 }
             }

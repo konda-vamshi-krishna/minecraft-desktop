@@ -1,0 +1,3 @@
+## 2026-11-03 - Inline mesher voxel sampling functions
+**Learning:** The greedy voxel mesher (`src/world/mesher.c`) is heavily bottlenecked by bounds checking and function call overheads in its innermost loops. Performance optimizations in this path should rely on `static inline` functions and unrolled bounds-guaranteed fast paths leveraging direct index arithmetic.
+**Action:** Inlined `Mesher_SampleVoxel`, `Mesher_IsOpaque`, and `Mesher_ComputeVertexAO` into `src/world/mesher.h`. Re-used `ChunkVoxelIndex` logic and removed intermediate boolean allocations in `Mesher_BuildMesh` for faster evaluation. Reduced the time to compute a single chunk mesh significantly.
