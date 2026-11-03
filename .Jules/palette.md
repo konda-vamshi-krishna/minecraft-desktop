@@ -1,0 +1,3 @@
+## 2026-11-03 - Crosshair Contrast and Keyboard Hints
+**Learning:** In procedural 3D environments where background brightness varies significantly (e.g., sky vs. snow vs. dark caves), HUD elements like crosshairs must have inverted or high-contrast outlines to remain visible. In addition, relying purely on mouse scrolling for hotbars without visual numbering hints leads to poor discoverability of keyboard shortcuts.
+**Action:** Always add a high-contrast (e.g., dark or inverted) outline to untextured UI elements overlaid on 3D scenes. Always render explicit keyboard shortcut labels on numbered UI slots to enhance discoverability.

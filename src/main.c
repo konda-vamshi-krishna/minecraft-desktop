@@ -689,6 +689,10 @@ static void App_OnRenderFrame(float alpha) {
         int sh = Platform_GetWindowHeight();
         int cx = sw / 2;
         int cy = sh / 2;
+        // Draw dark outline first for contrast
+        DrawRectangle(cx - 9, cy - 2, 18, 4, (Color){ 0, 0, 0, 150 });
+        DrawRectangle(cx - 2, cy - 9, 4, 18, (Color){ 0, 0, 0, 150 });
+        // Draw main crosshair
         DrawRectangle(cx - 8, cy - 1, 16, 2, (Color){ 255, 255, 255, 220 });
         DrawRectangle(cx - 1, cy - 8, 2, 16, (Color){ 255, 255, 255, 220 });
 
@@ -711,6 +715,11 @@ static void App_OnRenderFrame(float alpha) {
             } else {
                 DrawRectangleLines(sx, sy, slotSize, slotSize, (Color){ 80, 80, 80, 200 });
             }
+
+            // Keyboard shortcut hint
+            char hotkeyStr[2];
+            snprintf(hotkeyStr, sizeof(hotkeyStr), "%d", s + 1);
+            DrawText(hotkeyStr, sx + 4, sy + slotSize - 12, 10, (Color){ 180, 180, 180, 200 });
 
             const ItemStack* stack = &s_Game.inventory.slots[s];
             if (stack->itemId != ITEM_AIR && stack->count > 0) {
