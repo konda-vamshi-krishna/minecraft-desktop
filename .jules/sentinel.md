@@ -1,0 +1,4 @@
+## 2024-11-03 - TOCTOU Vulnerability in Directory Writability Probe
+**Vulnerability:** The application used `fopen(".write_test", "wb")` to test if a temporary fallback save directory was writable. Since standard temporary directories (like `/tmp`) are shared among users, an attacker could pre-create a symlink named `.write_test` pointing to a sensitive file.
+**Learning:** `fopen` with "w" or "wb" truncates existing files and implicitly follows symlinks, creating a Time-of-Check to Time-of-Use (TOCTOU) vulnerability where an attacker can overwrite arbitrary files the application has write access to.
+**Prevention:** Use `open` with `O_CREAT | O_WRONLY | O_EXCL` flags for all predictable or temporary files to ensure atomic file creation that fails if the file (or a symlink) already exists. Additionally, append unique values like `getpid()` to temporary filenames to make them unpredictable.
