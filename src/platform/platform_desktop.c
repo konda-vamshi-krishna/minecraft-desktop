@@ -27,6 +27,7 @@
     #include <timeapi.h>
     #include <direct.h>
     #include <io.h>
+    #include <sys/stat.h>
     #define OPEN_FLAGS (_O_CREAT | _O_WRONLY | _O_EXCL)
     #define OPEN_MODE (_S_IREAD | _S_IWRITE)
 
@@ -37,6 +38,9 @@
     #undef DrawText
     #undef LoadImage
 #elif defined(__linux__)
+    #ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199309L
+    #endif
     #include <unistd.h>
     #include <linux/limits.h>
     #include <sys/stat.h>
@@ -49,6 +53,14 @@
     #include <mach-o/dyld.h>
     #include <unistd.h>
     #include <sys/param.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <time.h>
+    #include <errno.h>
+    #define OPEN_FLAGS (O_CREAT | O_WRONLY | O_EXCL)
+    #define OPEN_MODE (0600)
+#else
+    #include <unistd.h>
     #include <sys/stat.h>
     #include <sys/types.h>
     #include <time.h>
@@ -192,6 +204,7 @@ static bool Platform_TestDirWritable(const char* dirPath) {
     FILE* f = _fdopen(fd, "wb");
     if (!f) {
         _close(fd);
+        _wremove(wideCanary);
         return false;
     }
 
@@ -206,6 +219,7 @@ static bool Platform_TestDirWritable(const char* dirPath) {
     FILE* f = fdopen(fd, "wb");
     if (!f) {
         close(fd);
+        remove(canary);
         return false;
     }
 
