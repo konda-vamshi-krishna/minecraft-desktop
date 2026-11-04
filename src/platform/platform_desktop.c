@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 #if defined(_WIN32)
     #ifndef WIN32_LEAN_AND_MEAN
@@ -26,6 +27,8 @@
     #include <timeapi.h>
     #include <direct.h>
     #include <io.h>
+    #define OPEN_FLAGS (_O_CREAT | _O_WRONLY | _O_EXCL)
+    #define OPEN_MODE (_S_IREAD | _S_IWRITE)
 
     // Undefine conflicting Windows macros before any potential Raylib header
     #undef CloseWindow
@@ -40,6 +43,8 @@
     #include <sys/types.h>
     #include <time.h>
     #include <errno.h>
+    #define OPEN_FLAGS (O_CREAT | O_WRONLY | O_EXCL)
+    #define OPEN_MODE (0600)
 #elif defined(__APPLE__)
     #include <mach-o/dyld.h>
     #include <unistd.h>
@@ -48,6 +53,8 @@
     #include <sys/types.h>
     #include <time.h>
     #include <errno.h>
+    #define OPEN_FLAGS (O_CREAT | O_WRONLY | O_EXCL)
+    #define OPEN_MODE (0600)
 #endif
 
 #include "../audio/audio.h"
@@ -159,27 +166,49 @@ static bool Platform_CreateDir(const char* path) {
 
 static bool Platform_TestDirWritable(const char* dirPath) {
     char canary[PLATFORM_PATH_MAX + 32];
-    snprintf(canary, sizeof(canary), "%s%c.write_test", dirPath,
+    unsigned int rand_val = 0;
 #if defined(_WIN32)
-             '\\'
+    rand_val = GetTickCount();
 #else
-             '/'
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    rand_val = (unsigned int)(ts.tv_nsec ^ ts.tv_sec);
 #endif
+    snprintf(canary, sizeof(canary), "%s%c.write_test_%u", dirPath,
+#if defined(_WIN32)
+             '\\',
+#else
+             '/',
+#endif
+             rand_val
     );
 #if defined(_WIN32)
     wchar_t wideCanary[PLATFORM_PATH_MAX + 32];
     int len = MultiByteToWideChar(CP_UTF8, 0, canary, -1, wideCanary, PLATFORM_PATH_MAX + 32);
     if (len <= 0) return false;
-    FILE* f = _wfopen(wideCanary, L"wb");
-    if (!f) return false;
+
+    int fd = _wopen(wideCanary, OPEN_FLAGS | _O_BINARY, OPEN_MODE);
+    if (fd == -1) return false;
+    FILE* f = _fdopen(fd, "wb");
+    if (!f) {
+        _close(fd);
+        return false;
+    }
+
     const char* testData = "minecraft_desktop_write_probe\n";
     size_t written = fwrite(testData, 1, strlen(testData), f);
     fclose(f);
     _wremove(wideCanary);
     return (written == strlen(testData));
 #else
-    FILE* f = fopen(canary, "wb");
-    if (!f) return false;
+    int fd = open(canary, OPEN_FLAGS, OPEN_MODE);
+    if (fd == -1) return false;
+    FILE* f = fdopen(fd, "wb");
+    if (!f) {
+        close(fd);
+        return false;
+    }
+
     const char* testData = "minecraft_desktop_write_probe\n";
     size_t written = fwrite(testData, 1, strlen(testData), f);
     fclose(f);

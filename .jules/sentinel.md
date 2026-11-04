@@ -1,0 +1,4 @@
+## 2024-03-24 - TOCTOU Vulnerability in File Write Probing
+**Vulnerability:** The `Platform_TestDirWritable` function in `src/platform/platform_desktop.c` used a static filename combined with `fopen("...", "wb")` to test directory writability. This could allow an attacker to predict the file path and create a symlink to a sensitive file before the file is opened, potentially overwriting it or truncating it since `wb` truncates.
+**Learning:** Checking for file writability in temporary or shared directories with predictable names and standard `fopen()` exposes the application to Time-of-Check to Time-of-Use (TOCTOU) symlink attacks.
+**Prevention:** Always use randomized filenames and the POSIX `open()` (or `_wopen()` on Windows) function with the flags `O_CREAT | O_WRONLY | O_EXCL` when testing writability or creating temporary files. The `O_EXCL` flag ensures that the open fails if the file (or a symlink pointing to it) already exists.
