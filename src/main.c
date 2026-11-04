@@ -689,6 +689,10 @@ static void App_OnRenderFrame(float alpha) {
         int sh = Platform_GetWindowHeight();
         int cx = sw / 2;
         int cy = sh / 2;
+        // Shadow for contrast
+        DrawRectangle(cx - 7, cy, 16, 2, (Color){ 0, 0, 0, 150 });
+        DrawRectangle(cx, cy - 7, 2, 16, (Color){ 0, 0, 0, 150 });
+        // Main crosshair
         DrawRectangle(cx - 8, cy - 1, 16, 2, (Color){ 255, 255, 255, 220 });
         DrawRectangle(cx - 1, cy - 8, 2, 16, (Color){ 255, 255, 255, 220 });
 
@@ -712,10 +716,16 @@ static void App_OnRenderFrame(float alpha) {
                 DrawRectangleLines(sx, sy, slotSize, slotSize, (Color){ 80, 80, 80, 200 });
             }
 
+            // Hotbar shortcut hint
+            char shortcutStr[16];
+            snprintf(shortcutStr, sizeof(shortcutStr), "%d", s + 1);
+            DrawText(shortcutStr, sx + 2, sy + 2, 10, (Color){ 150, 150, 150, 255 });
+
             const ItemStack* stack = &s_Game.inventory.slots[s];
             if (stack->itemId != ITEM_AIR && stack->count > 0) {
                 const char* itemName = App_GetItemShortName(stack->itemId);
-                DrawText(itemName, sx + 3, sy + 4, 10, (Color){ 220, 220, 220, 255 });
+                int itemNameWidth = MeasureText(itemName, 10);
+                DrawText(itemName, sx + (slotSize - itemNameWidth) / 2, sy + 14, 10, (Color){ 220, 220, 220, 255 });
 
                 if (stack->count > 1) {
                     char countStr[8];
