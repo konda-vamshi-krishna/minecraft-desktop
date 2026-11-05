@@ -1,0 +1,4 @@
+## 2025-02-14 - Fix Time-of-Check to Time-of-Use (TOCTOU) vulnerability in temp directory probe
+**Vulnerability:** Directory probe using a static filename (`.write_test`) and standard `fopen` is susceptible to TOCTOU symlink attacks, allowing arbitrary file overwrites or checks to be bypassed if a symlink is created in the temp path window.
+**Learning:** This codebase relies on writing temporary canary files to check if a directory is writable before initializing storage directories. This makes it critical to ensure file operations check and create the probe safely at the OS level, without being intercepted by symlinks.
+**Prevention:** Use randomized, unpredictable filenames for probes (e.g. process ID + randomness), and use POSIX `open()` (or `_wsopen_s` on Windows) with strict `O_CREAT | O_WRONLY | O_EXCL` flags so that the check fails if a file (or symlink) already exists.
