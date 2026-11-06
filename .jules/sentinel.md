@@ -1,0 +1,4 @@
+## 2024-11-06 - Insecure File Permissions / TOCTOU Symlink Vulnerability in `Platform_TestDirWritable`
+**Vulnerability:** The application tested directory writability by generating a predictable canary file (`.write_test`) and writing to it using standard `fopen()`. This allowed a malicious local user to pre-create a symlink pointing to a sensitive file, causing the application to overwrite it (TOCTOU attack).
+**Learning:** `fopen()` does not provide adequate protections against symlink attacks in world-writable or shared directories (like temporary directories). Predictable file names compound this risk.
+**Prevention:** Always use `open()` with `O_CREAT | O_WRONLY | O_EXCL` flags (POSIX) or `CreateFileW` with `CREATE_NEW` (Windows) when creating files in potentially shared locations. Ensure filenames have an unpredictable component, such as a process ID or random suffix, to minimize collision likelihood.
