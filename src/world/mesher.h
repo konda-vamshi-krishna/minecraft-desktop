@@ -100,7 +100,29 @@ static inline void Vertex_Unpack(
 }
 
 bool Mesher_IsOpaque(uint8_t blockId);
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z);
+static inline uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+    if (y < 0 || y >= CHUNK_HEIGHT) {
+        return BLOCK_AIR;
+    }
+    if (x < 0) {
+        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
+        return (neighbors && neighbors->negX) ? neighbors->negX->voxels[ChunkVoxelIndex(x + CHUNK_WIDTH, y, z)] : BLOCK_AIR;
+    }
+    if (x >= CHUNK_WIDTH) {
+        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
+        return (neighbors && neighbors->posX) ? neighbors->posX->voxels[ChunkVoxelIndex(x - CHUNK_WIDTH, y, z)] : BLOCK_AIR;
+    }
+    if (z < 0) {
+        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
+        return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[ChunkVoxelIndex(x, y, z + CHUNK_DEPTH)] : BLOCK_AIR;
+    }
+    if (z >= CHUNK_DEPTH) {
+        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
+        return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[ChunkVoxelIndex(x, y, z - CHUNK_DEPTH)] : BLOCK_AIR;
+    }
+    if (!chunk) return BLOCK_AIR;
+    return chunk->voxels[ChunkVoxelIndex(x, y, z)];
+}
 uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
                                int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao);
 void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, ChunkMesh* outMesh);
