@@ -1,0 +1,4 @@
+## 2024-05-24 - TOCTOU Vulnerability in Temporary File Write Probes
+**Vulnerability:** Write probes used to test directory permissions (e.g., `fopen(canary, "wb")`) using predictable filenames are vulnerable to Time-of-Check to Time-of-Use (TOCTOU) symlink attacks in shared or temporary directories.
+**Learning:** Standard C standard library functions like `fopen` do not provide mechanisms to guarantee a file is created exclusively and not following a symlink created by a malicious actor between the existence check and the write operation.
+**Prevention:** Avoid predictable filenames for temporary files. Use POSIX `open()` with `O_CREAT | O_WRONLY | O_EXCL` flags on Linux/macOS, and `CreateFileW` with `CREATE_NEW` on Windows to ensure the write operation fails if the file or a symlink already exists.
