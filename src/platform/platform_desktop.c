@@ -35,6 +35,7 @@
     #undef LoadImage
 #elif defined(__linux__)
     #include <unistd.h>
+    #include <fcntl.h>
     #include <linux/limits.h>
     #include <sys/stat.h>
     #include <sys/types.h>
@@ -43,6 +44,7 @@
 #elif defined(__APPLE__)
     #include <mach-o/dyld.h>
     #include <unistd.h>
+    #include <fcntl.h>
     #include <sys/param.h>
     #include <sys/stat.h>
     #include <sys/types.h>
@@ -170,21 +172,22 @@ static bool Platform_TestDirWritable(const char* dirPath) {
     wchar_t wideCanary[PLATFORM_PATH_MAX + 32];
     int len = MultiByteToWideChar(CP_UTF8, 0, canary, -1, wideCanary, PLATFORM_PATH_MAX + 32);
     if (len <= 0) return false;
-    FILE* f = _wfopen(wideCanary, L"wb");
-    if (!f) return false;
+    HANDLE hFile = CreateFileW(wideCanary, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
     const char* testData = "minecraft_desktop_write_probe\n";
-    size_t written = fwrite(testData, 1, strlen(testData), f);
-    fclose(f);
+    DWORD written = 0;
+    BOOL writeResult = WriteFile(hFile, testData, (DWORD)strlen(testData), &written, NULL);
+    CloseHandle(hFile);
     _wremove(wideCanary);
-    return (written == strlen(testData));
+    return (writeResult && written == (DWORD)strlen(testData));
 #else
-    FILE* f = fopen(canary, "wb");
-    if (!f) return false;
+    int fd = open(canary, O_CREAT | O_WRONLY | O_EXCL, 0600);
+    if (fd < 0) return false;
     const char* testData = "minecraft_desktop_write_probe\n";
-    size_t written = fwrite(testData, 1, strlen(testData), f);
-    fclose(f);
+    ssize_t written = write(fd, testData, strlen(testData));
+    close(fd);
     remove(canary);
-    return (written == strlen(testData));
+    return (written == (ssize_t)strlen(testData));
 #endif
 }
 
