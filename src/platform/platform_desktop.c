@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #if defined(_WIN32)
     #ifndef WIN32_LEAN_AND_MEAN
@@ -40,6 +41,7 @@
     #include <sys/types.h>
     #include <time.h>
     #include <errno.h>
+    #include <fcntl.h>
 #elif defined(__APPLE__)
     #include <mach-o/dyld.h>
     #include <unistd.h>
@@ -48,6 +50,7 @@
     #include <sys/types.h>
     #include <time.h>
     #include <errno.h>
+    #include <fcntl.h>
 #endif
 
 #include "../audio/audio.h"
@@ -158,33 +161,40 @@ static bool Platform_CreateDir(const char* path) {
 }
 
 static bool Platform_TestDirWritable(const char* dirPath) {
-    char canary[PLATFORM_PATH_MAX + 32];
-    snprintf(canary, sizeof(canary), "%s%c.write_test", dirPath,
+    char canary[PLATFORM_PATH_MAX + 64];
+    unsigned int r1 = (unsigned int)time(NULL);
+    unsigned int r2 = (unsigned int)clock();
+    snprintf(canary, sizeof(canary), "%s%c.write_test_%u_%u", dirPath,
 #if defined(_WIN32)
-             '\\'
+             '\\',
 #else
-             '/'
+             '/',
 #endif
+             r1, r2
     );
 #if defined(_WIN32)
-    wchar_t wideCanary[PLATFORM_PATH_MAX + 32];
-    int len = MultiByteToWideChar(CP_UTF8, 0, canary, -1, wideCanary, PLATFORM_PATH_MAX + 32);
+    wchar_t wideCanary[PLATFORM_PATH_MAX + 64];
+    int len = MultiByteToWideChar(CP_UTF8, 0, canary, -1, wideCanary, PLATFORM_PATH_MAX + 64);
     if (len <= 0) return false;
-    FILE* f = _wfopen(wideCanary, L"wb");
-    if (!f) return false;
+
+    HANDLE hFile = CreateFileW(wideCanary, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
     const char* testData = "minecraft_desktop_write_probe\n";
-    size_t written = fwrite(testData, 1, strlen(testData), f);
-    fclose(f);
-    _wremove(wideCanary);
-    return (written == strlen(testData));
+    DWORD written = 0;
+    BOOL success = WriteFile(hFile, testData, (DWORD)strlen(testData), &written, NULL);
+    CloseHandle(hFile);
+    DeleteFileW(wideCanary);
+    return (success && written == strlen(testData));
 #else
-    FILE* f = fopen(canary, "wb");
-    if (!f) return false;
+    int fd = open(canary, O_CREAT | O_WRONLY | O_EXCL, 0600);
+    if (fd < 0) return false;
+
     const char* testData = "minecraft_desktop_write_probe\n";
-    size_t written = fwrite(testData, 1, strlen(testData), f);
-    fclose(f);
+    ssize_t written = write(fd, testData, strlen(testData));
+    close(fd);
     remove(canary);
-    return (written == strlen(testData));
+    return (written == (ssize_t)strlen(testData));
 #endif
 }
 
