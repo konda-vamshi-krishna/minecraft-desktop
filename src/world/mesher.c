@@ -10,34 +10,6 @@
 static PackedVertex s_ScratchVertices[MESHER_MAX_VERTICES];
 static uint32_t     s_ScratchIndices[MESHER_MAX_INDICES];
 
-bool Mesher_IsOpaque(uint8_t blockId) {
-    return (blockId != BLOCK_AIR) && (blockId != BLOCK_WATER);
-}
-
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
-    if (y < 0 || y >= CHUNK_HEIGHT) {
-        return BLOCK_AIR;
-    }
-    if (x < 0) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negX) ? neighbors->negX->voxels[ChunkVoxelIndex(x + CHUNK_WIDTH, y, z)] : BLOCK_AIR;
-    }
-    if (x >= CHUNK_WIDTH) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posX) ? neighbors->posX->voxels[ChunkVoxelIndex(x - CHUNK_WIDTH, y, z)] : BLOCK_AIR;
-    }
-    if (z < 0) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[ChunkVoxelIndex(x, y, z + CHUNK_DEPTH)] : BLOCK_AIR;
-    }
-    if (z >= CHUNK_DEPTH) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
-        return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[ChunkVoxelIndex(x, y, z - CHUNK_DEPTH)] : BLOCK_AIR;
-    }
-    if (!chunk) return BLOCK_AIR;
-    return chunk->voxels[ChunkVoxelIndex(x, y, z)];
-}
-
 uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
                                int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao) {
     static const int s_Normals[6][3] = {
@@ -121,20 +93,43 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
             int n = 0;
 
             /* 1. Build signed comparison mask using direct neighbor sampling */
-            for (x[v] = 0; x[v] < vLimit; x[v]++) {
-                for (x[u] = 0; x[u] < uLimit; x[u]++) {
-                    uint8_t b1 = Mesher_SampleVoxel(chunk, neighbors, x[0], x[1], x[2]);
-                    uint8_t b2 = Mesher_SampleVoxel(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+            if (x[d] >= 0 && x[d] < dLimit - 1) {
+                /* FAST PATH: Both current and adjacent slices are strictly within chunk boundaries.
+                 * Eliminates all conditional boundary checks inside the inner loop for ~88% of cases. */
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        uint8_t b1 = chunk->voxels[ChunkVoxelIndex(x[0], x[1], x[2])];
+                        uint8_t b2 = chunk->voxels[ChunkVoxelIndex(x[0] + q[0], x[1] + q[1], x[2] + q[2])];
 
-                    bool op1 = Mesher_IsOpaque(b1);
-                    bool op2 = Mesher_IsOpaque(b2);
+                        bool op1 = Mesher_IsOpaque(b1);
+                        bool op2 = Mesher_IsOpaque(b2);
 
-                    if (op1 == op2) {
-                        mask[n++] = 0;
-                    } else if (op1) {
-                        mask[n++] = (int16_t)b1;  /* Normal pointing +d */
-                    } else {
-                        mask[n++] = -(int16_t)b2; /* Normal pointing -d */
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;  /* Normal pointing +d */
+                        } else {
+                            mask[n++] = -(int16_t)b2; /* Normal pointing -d */
+                        }
+                    }
+                }
+            } else {
+                /* SLOW PATH: Slices touch chunk boundaries, requiring neighbor chunk sampling */
+                for (x[v] = 0; x[v] < vLimit; x[v]++) {
+                    for (x[u] = 0; x[u] < uLimit; x[u]++) {
+                        uint8_t b1 = Mesher_SampleVoxel(chunk, neighbors, x[0], x[1], x[2]);
+                        uint8_t b2 = Mesher_SampleVoxel(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+
+                        bool op1 = Mesher_IsOpaque(b1);
+                        bool op2 = Mesher_IsOpaque(b2);
+
+                        if (op1 == op2) {
+                            mask[n++] = 0;
+                        } else if (op1) {
+                            mask[n++] = (int16_t)b1;  /* Normal pointing +d */
+                        } else {
+                            mask[n++] = -(int16_t)b2; /* Normal pointing -d */
+                        }
                     }
                 }
             }
