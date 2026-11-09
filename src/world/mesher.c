@@ -14,28 +14,34 @@ bool Mesher_IsOpaque(uint8_t blockId) {
     return (blockId != BLOCK_AIR) && (blockId != BLOCK_WATER);
 }
 
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
-    if (y < 0 || y >= CHUNK_HEIGHT) {
-        return BLOCK_AIR;
+static inline uint8_t Mesher_SampleVoxel_Inline(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+    if (__builtin_expect((unsigned int)y >= CHUNK_HEIGHT, 0)) return BLOCK_AIR;
+    if (__builtin_expect((unsigned int)x < CHUNK_WIDTH && (unsigned int)z < CHUNK_DEPTH, 1)) {
+        return chunk->voxels[ChunkVoxelIndex(x, y, z)];
     }
+
     if (x < 0) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
+        if ((unsigned int)z >= CHUNK_DEPTH) return BLOCK_AIR;
         return (neighbors && neighbors->negX) ? neighbors->negX->voxels[ChunkVoxelIndex(x + CHUNK_WIDTH, y, z)] : BLOCK_AIR;
     }
     if (x >= CHUNK_WIDTH) {
-        if (z < 0 || z >= CHUNK_DEPTH) return BLOCK_AIR;
+        if ((unsigned int)z >= CHUNK_DEPTH) return BLOCK_AIR;
         return (neighbors && neighbors->posX) ? neighbors->posX->voxels[ChunkVoxelIndex(x - CHUNK_WIDTH, y, z)] : BLOCK_AIR;
     }
     if (z < 0) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
+        if ((unsigned int)x >= CHUNK_WIDTH) return BLOCK_AIR;
         return (neighbors && neighbors->negZ) ? neighbors->negZ->voxels[ChunkVoxelIndex(x, y, z + CHUNK_DEPTH)] : BLOCK_AIR;
     }
     if (z >= CHUNK_DEPTH) {
-        if (x < 0 || x >= CHUNK_WIDTH) return BLOCK_AIR;
+        if ((unsigned int)x >= CHUNK_WIDTH) return BLOCK_AIR;
         return (neighbors && neighbors->posZ) ? neighbors->posZ->voxels[ChunkVoxelIndex(x, y, z - CHUNK_DEPTH)] : BLOCK_AIR;
     }
+    return BLOCK_AIR;
+}
+
+uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
     if (!chunk) return BLOCK_AIR;
-    return chunk->voxels[ChunkVoxelIndex(x, y, z)];
+    return Mesher_SampleVoxel_Inline(chunk, neighbors, x, y, z);
 }
 
 uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
@@ -78,9 +84,9 @@ uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbo
     int c_y = by + ny + du_y + dv_y;
     int c_z = bz + nz + du_z + dv_z;
 
-    bool s1 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s1_x, s1_y, s1_z));
-    bool s2 = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, s2_x, s2_y, s2_z));
-    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel(chunk, neighbors, c_x,  c_y,  c_z));
+    bool s1 = Mesher_IsOpaque(Mesher_SampleVoxel_Inline(chunk, neighbors, s1_x, s1_y, s1_z));
+    bool s2 = Mesher_IsOpaque(Mesher_SampleVoxel_Inline(chunk, neighbors, s2_x, s2_y, s2_z));
+    bool c  = Mesher_IsOpaque(Mesher_SampleVoxel_Inline(chunk, neighbors, c_x,  c_y,  c_z));
 
     /* Corner rule: if both side walls are solid, light cannot penetrate the corner */
     if (s1 && s2) {
@@ -120,11 +126,25 @@ void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, Chunk
         for (x[d] = -1; x[d] < dLimit; ) {
             int n = 0;
 
-            /* 1. Build signed comparison mask using direct neighbor sampling */
+                                    /* 1. Build signed comparison mask using direct neighbor sampling */
             for (x[v] = 0; x[v] < vLimit; x[v]++) {
                 for (x[u] = 0; x[u] < uLimit; x[u]++) {
-                    uint8_t b1 = Mesher_SampleVoxel(chunk, neighbors, x[0], x[1], x[2]);
-                    uint8_t b2 = Mesher_SampleVoxel(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+                    uint8_t b1, b2;
+                    if (__builtin_expect((unsigned int)x[1] < CHUNK_HEIGHT - 1 && (unsigned int)x[0] < CHUNK_WIDTH && (unsigned int)x[2] < CHUNK_DEPTH, 1)) {
+                        b1 = chunk->voxels[ChunkVoxelIndex(x[0], x[1], x[2])];
+                        if (d == 1) { // Y-axis
+                            b2 = chunk->voxels[ChunkVoxelIndex(x[0], x[1] + 1, x[2])];
+                        } else if (d == 0) { // X-axis
+                            if (x[0] + 1 < CHUNK_WIDTH) b2 = chunk->voxels[ChunkVoxelIndex(x[0] + 1, x[1], x[2])];
+                            else b2 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0] + 1, x[1], x[2]);
+                        } else { // Z-axis
+                            if (x[2] + 1 < CHUNK_DEPTH) b2 = chunk->voxels[ChunkVoxelIndex(x[0], x[1], x[2] + 1)];
+                            else b2 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0], x[1], x[2] + 1);
+                        }
+                    } else {
+                        b1 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0], x[1], x[2]);
+                        b2 = Mesher_SampleVoxel_Inline(chunk, neighbors, x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+                    }
 
                     bool op1 = Mesher_IsOpaque(b1);
                     bool op2 = Mesher_IsOpaque(b2);
