@@ -1,0 +1,3 @@
+## 2024-05-24 - Inline chunk data sampling methods in greedy voxel mesher
+**Learning:** The greedy voxel mesher (`src/world/mesher.c`) is heavily bottlenecked by bounds checking and function call overheads in its innermost loops. Performance optimizations in this path should rely on `static inline` functions and unrolled bounds-guaranteed fast paths leveraging direct index arithmetic.
+**Action:** Always verify if frequently called utility functions inside deep loops can be aggressively inlined using `static inline` in their corresponding header files to eliminate function call overhead and allow the compiler to perform further optimizations.
