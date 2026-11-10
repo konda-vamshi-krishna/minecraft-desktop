@@ -1,0 +1,4 @@
+## 2025-02-09 - Time-of-Check to Time-of-Use (TOCTOU) file creation vulnerability
+**Vulnerability:** The platform directory write check function (`Platform_TestDirWritable`) used `fopen()` with a predictable filename (`.write_test`) to verify directory permissions.
+**Learning:** This approach leaves a brief window between checking if a file exists and creating it, allowing for a symlink attack (TOCTOU) where an attacker could replace the predictable path with a link to a sensitive file, which the application would then overwrite.
+**Prevention:** Always use secure file creation APIs like `open()` with `O_CREAT | O_WRONLY | O_EXCL` flags on POSIX and `CreateFileW` with `CREATE_NEW` on Windows to ensure atomic file creation that fails if the file or a symlink already exists. Randomizing the filename is also a good defense-in-depth measure.
