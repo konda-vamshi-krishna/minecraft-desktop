@@ -1,0 +1,3 @@
+## 2024-11-11 - Static UI elements require contrasting outlines
+**Learning:** In dynamic 3D environments like Minecraft where the background can vary wildly in brightness (e.g. bright sky, white snow, dark caves), a plain white crosshair can become completely invisible.
+**Action:** Always ensure static UI elements overlaid on dynamic 3D environments include a contrasting outline or drop shadow (e.g. adding a slightly larger semi-transparent black shape behind the primary element) so they remain visible regardless of the background color.
