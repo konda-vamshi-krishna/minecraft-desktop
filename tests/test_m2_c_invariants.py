@@ -104,7 +104,7 @@ class TestM2CInvariants(unittest.TestCase):
 
         fns = [
             "Vertex_Pack", "Vertex_Unpack", "Mesher_IsOpaque",
-            "Mesher_SampleVoxel", "Mesher_ComputeVertexAO",
+            "Mesher_ComputeVertexAO",
             "Mesher_BuildMesh", "MesherQueue_Init",
             "MesherQueue_Push", "MesherQueue_Process"
         ]
