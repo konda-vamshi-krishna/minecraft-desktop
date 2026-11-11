@@ -100,7 +100,6 @@ static inline void Vertex_Unpack(
 }
 
 bool Mesher_IsOpaque(uint8_t blockId);
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z);
 uint8_t Mesher_ComputeVertexAO(const Chunk* chunk, const NeighborChunks* neighbors,
                                int bx, int by, int bz, int normalIdx, int du_ao, int dv_ao);
 void Mesher_BuildMesh(const Chunk* chunk, const NeighborChunks* neighbors, ChunkMesh* outMesh);
