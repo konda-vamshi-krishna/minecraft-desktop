@@ -14,7 +14,12 @@ bool Mesher_IsOpaque(uint8_t blockId) {
     return (blockId != BLOCK_AIR) && (blockId != BLOCK_WATER);
 }
 
-uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+static inline uint8_t Mesher_SampleVoxel(const Chunk* chunk, const NeighborChunks* neighbors, int x, int y, int z) {
+    /* Fast path: if the coordinates are within the current chunk, we bypass neighbor lookups. */
+    /* We cast to unsigned for a single-comparison bounds check per axis. */
+    if ((unsigned)x < (unsigned)CHUNK_WIDTH && (unsigned)y < (unsigned)CHUNK_HEIGHT && (unsigned)z < (unsigned)CHUNK_DEPTH) {
+        return chunk->voxels[ChunkVoxelIndex(x, y, z)];
+    }
     if (y < 0 || y >= CHUNK_HEIGHT) {
         return BLOCK_AIR;
     }
